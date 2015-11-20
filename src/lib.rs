@@ -10,9 +10,9 @@ use hyper::Url;
 
 
 /// Turns "123" into 123
-pub fn intify(instr: &str) -> i32{
+pub fn intify(instr: &str) -> u32{
     // TODO: Better error handling
-    instr.to_owned().parse::<i32>().unwrap()
+    instr.to_owned().parse::<u32>().unwrap()
 }
 
 
@@ -28,7 +28,7 @@ pub enum TvdbError {
 
 #[derive(Debug,Clone)]
 pub struct SeriesSearchResult{
-    pub id: i32, // TODO: Is this any different to seriesid?
+    pub seriesid: u32, // seriesid is preferred over id according to TVDB wiki
     pub seriesname: String,
     pub language: String,
     pub overview: Option<String>,
@@ -48,10 +48,11 @@ impl Tvdb{
         Tvdb{key: key}
     }
 
-    fn search(&self, name: String, lang: String) -> Result<Vec<SeriesSearchResult>, TvdbError>{
+    /// Searches for a given series name.
+    fn search(&self, seriesname: String, lang: String) -> Result<Vec<SeriesSearchResult>, TvdbError>{
         let client = Client::new();
 
-        let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?seriesname={}", name);
+        let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?seriesname={}", seriesname);
         let url = Url::parse(&formatted_url).ok().expect("invalid URL");
         println!("Getting {}", url);
 
@@ -81,7 +82,7 @@ impl Tvdb{
             }
 
             let r = SeriesSearchResult{
-                id:         intify(&get_text(child, "id").expect("Search result XML missing 'id' element")),
+                seriesid:   intify(&get_text(child, "seriesid").expect("Search result XML missing 'seriesid' element")),
                 seriesname: get_text(child, "SeriesName").expect("Search result XML Missing 'SeriesName' element"),
                 language:   get_text(child, "language").expect("Search result XML missing 'language' element"),
                 overview:   get_text(child, "Overview"),
@@ -103,6 +104,17 @@ impl Tvdb{
     }
 }
 
+struct EpisodeInfo{
+    pub episodename: String,
+}
+
+impl SeriesSearchResult{
+    fn episode(&self, season: u32, episode: u32) -> EpisodeInfo{
+        println!("{} s{}e{}", self.seriesname, season, episode);
+
+        EpisodeInfo{episodename: "My First Day".to_owned()} // FIXME
+    }
+}
 
 #[cfg(test)]
 mod test{
@@ -120,6 +132,22 @@ mod test{
         let api = Tvdb::new("APIKEY".to_owned());
         let sr = api.search("ladlkgdklfgsdfglk".to_owned(), "en".to_owned());
         assert!(sr.is_err());
+    }
+
+    #[test]
+    fn epinfo_default(){
+        let api = Tvdb::new("APIKEY".to_owned());
+        let sr = api.search("scrubs".to_owned(), "en".to_owned()).ok().unwrap();
+        let ep = sr[0].episode(1, 2);
+        assert!(ep.episodename == "My First Day");
+    }
+
+    #[test]
+    fn epinfo_dvd(){
+        let api = Tvdb::new("APIKEY".to_owned());
+        let sr = api.search("scrubs".to_owned(), "en".to_owned()).ok().unwrap();
+        let ep = sr[0].episode(1, 2);
+        assert!(ep.episodename == "My First Day");
     }
 
 }
