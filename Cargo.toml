@@ -1,0 +1,8 @@
+[package]
+name = "tvdb"
+version = "0.1.0"
+authors = ["dbr <dbr.onix@gmail.com>"]
+
+[dependencies]
+hyper = "*"
+xmltree = "*"
