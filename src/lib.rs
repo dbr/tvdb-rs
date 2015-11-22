@@ -47,12 +47,12 @@ pub struct Tvdb{
 }
 
 impl Tvdb{
-    fn new(key: String) -> Tvdb{
+    pub fn new(key: String) -> Tvdb{
         Tvdb{key: key}
     }
 
     /// Searches for a given series name.
-    fn search(&self, seriesname: String, lang: String) -> Result<Vec<SeriesSearchResult>, TvdbError>{
+    pub fn search(&self, seriesname: String, lang: String) -> Result<Vec<SeriesSearchResult>, TvdbError>{
         let client = Client::new();
 
         let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?seriesname={}", seriesname);
@@ -109,8 +109,8 @@ impl Tvdb{
     }
 }
 
-struct EpisodeInfo{
-    id: u32, //id
+pub struct EpisodeInfo{
+    pub id: u32, //id
     // Combined_episodenumber
     // Combined_season
     // DVD_chapter
@@ -119,7 +119,7 @@ struct EpisodeInfo{
     // DVD_season
     // Director
     // EpImgFlag
-    episodename: String, // EpisodeName
+    pub episodename: String, // EpisodeName
     // EpisodeNumber
     // FirstAired
     // GuestStars
@@ -145,7 +145,7 @@ struct EpisodeInfo{
 }
 
 impl SeriesSearchResult{
-    fn episode(&self, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
+    pub fn episode(&self, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
         // <mirrorpath>/api/<apikey>/series/{seriesid}/default/{season}/{episode}/{language}.xml
         println!("{} s{}e{}", self.seriesname, season, episode);
 
