@@ -25,6 +25,7 @@ pub enum TvdbError {
     Cancelled,
 }
 
+/// Series ID from TheTVDB.com, along with language
 #[derive(Debug,Clone)]
 pub struct EpisodeId{
     seriesid: u32,
@@ -43,6 +44,8 @@ impl Into<EpisodeId> for SeriesSearchResult{
     }
 }
 
+/// Series info as returned from TheTVDB's series search method:
+/// http://www.thetvdb.com/wiki/index.php?title=API:GetSeries
 #[derive(Debug,Clone)]
 pub struct SeriesSearchResult{
     pub seriesid: u32, // seriesid is preferred over id according to TVDB wiki
@@ -58,12 +61,56 @@ pub struct SeriesSearchResult{
     api: Tvdb,
 }
 
+
+/// Base episode record,
+/// http://www.thetvdb.com/wiki/index.php?title=API:Base_Episode_Record
+#[derive(Debug,Clone)]
+pub struct EpisodeInfo{
+    pub id: u32, //id
+    // Combined_episodenumber
+    // Combined_season
+    // DVD_chapter
+    // DVD_discid
+    // DVD_episodenumber
+    // DVD_season
+    // Director
+    // EpImgFlag
+    pub episodename: String, // EpisodeName
+    // EpisodeNumber
+    // FirstAired
+    // GuestStars
+    // IMDB_ID
+    // Language
+    // Overview
+    // ProductionCode
+    // Rating
+    // RatingCount
+    // SeasonNumber
+    // Writer
+    // absolute_number
+    // airsafter_season
+    // airsbefore_episode
+    // airsbefore_season
+    // filename
+    // lastupdated
+    // seasonid
+    // seriesid
+    // thumb_added
+    // thumb_height
+    // thumb_width
+}
+
+
+/// Main interface
 #[derive(Debug,Clone)]
 pub struct Tvdb{
     key: String,
 }
 
+
 impl Tvdb{
+    /// Initalise API with the given API key. A key can be aquired via
+    /// the [API Key Registration page](http://thetvdb.com/?tab=apiregister)
     pub fn new(key: String) -> Tvdb{
         Tvdb{key: key}
     }
@@ -124,44 +171,7 @@ impl Tvdb{
 
         return Ok(results);
     }
-}
 
-pub struct EpisodeInfo{
-    pub id: u32, //id
-    // Combined_episodenumber
-    // Combined_season
-    // DVD_chapter
-    // DVD_discid
-    // DVD_episodenumber
-    // DVD_season
-    // Director
-    // EpImgFlag
-    pub episodename: String, // EpisodeName
-    // EpisodeNumber
-    // FirstAired
-    // GuestStars
-    // IMDB_ID
-    // Language
-    // Overview
-    // ProductionCode
-    // Rating
-    // RatingCount
-    // SeasonNumber
-    // Writer
-    // absolute_number
-    // airsafter_season
-    // airsbefore_episode
-    // airsbefore_season
-    // filename
-    // lastupdated
-    // seasonid
-    // seriesid
-    // thumb_added
-    // thumb_height
-    // thumb_width
-}
-
-impl SeriesSearchResult{
     pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
         // <mirrorpath>/api/<apikey>/series/{seriesid}/default/{season}/{episode}/{language}.xml
 
