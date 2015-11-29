@@ -25,6 +25,23 @@ pub enum TvdbError {
     Cancelled,
 }
 
+#[derive(Debug,Clone)]
+pub struct EpisodeId{
+    seriesid: u32,
+    lang: String,
+}
+
+impl Into<EpisodeId> for u32{
+    fn into(self) -> EpisodeId{
+        EpisodeId{seriesid: self, lang: "en".to_owned()}
+    }
+}
+
+impl Into<EpisodeId> for SeriesSearchResult{
+    fn into(self) -> EpisodeId{
+        EpisodeId{seriesid: self.seriesid, lang: self.language}
+    }
+}
 
 #[derive(Debug,Clone)]
 pub struct SeriesSearchResult{
@@ -145,16 +162,15 @@ pub struct EpisodeInfo{
 }
 
 impl SeriesSearchResult{
-    pub fn episode(&self, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
+    pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
         // <mirrorpath>/api/<apikey>/series/{seriesid}/default/{season}/{episode}/{language}.xml
-        println!("{} s{}e{}", self.seriesname, season, episode);
 
         let client = Client::new();
 
         let formatted_url = format!("http://thetvdb.com/api/{apikey}/series/{seriesid}/default/{season}/{episode}/{language}.xml",
-                                    apikey=self.api.key,
-                                    seriesid=self.seriesid,
-                                    language=self.language,
+                                    apikey=self.key,
+                                    seriesid=epid.into().seriesid,
+                                    language=epid.into().lang,
                                     season=season,
                                     episode=episode,
                                     );
@@ -215,7 +231,7 @@ mod test{
     fn epinfo_default(){
         let api = Tvdb::new(APIKEY.to_owned());
         let sr = api.search("scrubs".to_owned(), "en".to_owned()).ok().unwrap();
-        let ep = sr[0].episode(1, 2).ok().unwrap();
+        let ep = api.episode(sr[0].clone(), 1, 2).ok().unwrap();
         assert!(ep.episodename == "My Mentor");
     }
 
