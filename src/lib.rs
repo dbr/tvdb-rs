@@ -10,7 +10,7 @@ use hyper::Url;
 
 
 /// Turns "123" into 123
-pub fn intify(instr: &str) -> u32{
+fn intify(instr: &str) -> u32{
     // TODO: Better error handling
     instr.to_owned().parse::<u32>().unwrap()
 }
@@ -57,8 +57,6 @@ pub struct SeriesSearchResult{
     //pub firstaired: Date,
     pub network: Option<String>,
     pub zap2it_id: Option<String>,
-
-    api: Tvdb,
 }
 
 
@@ -158,8 +156,6 @@ impl Tvdb{
                 //firstaired: Date,
                 network:    get_text(child, "Network"),
                 zap2it_id:  get_text(child, "zap2it_id"),
-
-                api: self.clone(), // TODO: Is there better way of allowing EpisodeInfo.episode(..) to access the key?
             };
 
             results.push(r);
@@ -172,15 +168,15 @@ impl Tvdb{
         return Ok(results);
     }
 
-    pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
+    fn episode_inner(&self, epid: EpisodeId, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
         // <mirrorpath>/api/<apikey>/series/{seriesid}/default/{season}/{episode}/{language}.xml
 
         let client = Client::new();
 
         let formatted_url = format!("http://thetvdb.com/api/{apikey}/series/{seriesid}/default/{season}/{episode}/{language}.xml",
                                     apikey=self.key,
-                                    seriesid=epid.into().seriesid,
-                                    language=epid.into().lang,
+                                    seriesid=epid.seriesid,
+                                    language=epid.lang,
                                     season=season,
                                     episode=episode,
                                     );
@@ -214,6 +210,10 @@ impl Tvdb{
             id: intify(&get_text(root, "id").unwrap()),
             episodename: get_text(root, "EpisodeName").unwrap(),
         })
+    }
+
+    pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
+        self.episode_inner(epid.into(), season, episode)
     }
 }
 
