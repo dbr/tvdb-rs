@@ -6,6 +6,7 @@ authors = ["dbr <dbr.onix@gmail.com>"]
 [dependencies]
 hyper = "*"
 xmltree = "*"
+url = "*"
 
 [[example]]
 name = "tvdb-lookup"

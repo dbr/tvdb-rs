@@ -1,12 +1,10 @@
 extern crate xmltree;
 extern crate hyper;
-
+extern crate url;
 
 use hyper::Client;
 use hyper::header::Connection;
 use std::io::Read;
-
-use hyper::Url;
 
 
 /// Turns "123" into 123
@@ -117,8 +115,9 @@ impl Tvdb{
     pub fn search(&self, seriesname: String, lang: String) -> Result<Vec<SeriesSearchResult>, TvdbError>{
         let client = Client::new();
 
-        let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?seriesname={}", seriesname);
-        let url = Url::parse(&formatted_url).ok().expect("invalid URL");
+        let params = url::form_urlencoded::serialize([("seriesname", &seriesname), ("language", &lang)].iter());
+        let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
+        let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
         println!("Getting {}", url);
 
         let res = client.get(url)
@@ -180,7 +179,7 @@ impl Tvdb{
                                     season=season,
                                     episode=episode,
                                     );
-        let url = Url::parse(&formatted_url).ok().expect("invalid URL");
+        let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
         println!("Getting {}", url);
 
         // Perform request
