@@ -9,5 +9,6 @@ fn main(){
     let sr = api.search(std::env::args().nth(1).unwrap(), "en".to_owned()).ok().unwrap();
     for r in sr.iter(){
         println!("{:?} (id: {})", r.seriesname, r.seriesid);
+        println!("{:?}", api.episode(sr[0].clone(), 1, 2));
     }
 }
