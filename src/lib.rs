@@ -134,7 +134,7 @@ impl Tvdb{
             .send();
 
         let mut res = match res {
-            Err(e) => return Err(TvdbError::CommunicationError{reason: "Error contacting TVDB".to_owned()}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
+            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error contacting TVDB: {}", e)}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
             Ok(r) => r
         };
 
@@ -197,7 +197,7 @@ impl Tvdb{
             .send();
 
         let mut res = match res {
-            Err(e) => return Err(TvdbError::CommunicationError{reason: "Error contacting TVDB".to_owned()}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
+            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error contacting TVDB: {}", e)}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
             Ok(r) => r
         };
 
