@@ -30,6 +30,15 @@ pub struct EpisodeId{
     lang: String,
 }
 
+impl EpisodeId{
+    pub fn new(seriesid: u32, lang: &str) -> EpisodeId{
+        EpisodeId{
+            seriesid: seriesid,
+            lang: lang.to_owned(),
+        }
+    }
+}
+
 impl From<u32> for EpisodeId{
     fn from(x: u32) -> Self{
         EpisodeId{seriesid: x, lang: "en".to_owned()}
@@ -234,6 +243,13 @@ mod test{
         let api = Tvdb::new(APIKEY.to_owned());
         let sr = api.search("ladlkgdklfgsdfglk".to_owned(), "en".to_owned());
         assert!(sr.is_err());
+    }
+
+    #[test]
+    fn lookup_by_epid(){
+        let api = Tvdb::new(APIKEY.to_owned());
+        let ep = api.episode(EpisodeId::new(76156, "en"), 1, 2).ok().unwrap();
+        assert!(ep.episodename == "My Mentor");
     }
 
     #[test]
