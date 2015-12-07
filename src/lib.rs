@@ -106,12 +106,32 @@ pub struct EpisodeInfo{
 }
 
 
+fn get_xmltree_from_url(url: hyper::Url) -> Result<xmltree::Element, TvdbError>{
+    let client = Client::new();
+    let res = client.get(url)
+        .header(Connection::close())
+        .send();
+
+    let mut res = match res {
+        Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error contacting TVDB: {}", e)}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
+        Ok(r) => r
+    };
+
+    // Read the Response.
+    let mut body = String::new();
+    res.read_to_string(&mut body).unwrap();
+
+    // Parse XML
+    let tree = xmltree::Element::parse(body.as_bytes());
+
+    return Ok(tree);
+}
+
 /// Main interface
 #[derive(Debug,Clone)]
 pub struct Tvdb{
     key: String,
 }
-
 
 impl Tvdb{
     /// Initalise API with the given API key. A key can be aquired via
@@ -122,28 +142,12 @@ impl Tvdb{
 
     /// Searches for a given series name.
     pub fn search(&self, seriesname: String, lang: String) -> Result<Vec<SeriesSearchResult>, TvdbError>{
-        let client = Client::new();
-
         let params = url::form_urlencoded::serialize([("seriesname", &seriesname), ("language", &lang)].iter());
         let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
         let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
         println!("Getting {}", url);
 
-        let res = client.get(url)
-            .header(Connection::close())
-            .send();
-
-        let mut res = match res {
-            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error contacting TVDB: {}", e)}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
-            Ok(r) => r
-        };
-
-        // Read the Response.
-        let mut body = String::new();
-        res.read_to_string(&mut body).unwrap();
-
-        // Parse XML
-        let tree = xmltree::Element::parse(body.as_bytes());
+        let tree = try!(get_xmltree_from_url(url));
 
         // Convert XML into structs
         let mut results : Vec<SeriesSearchResult> = vec![];
@@ -179,8 +183,6 @@ impl Tvdb{
     fn episode_inner(&self, epid: EpisodeId, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
         // <mirrorpath>/api/<apikey>/series/{seriesid}/default/{season}/{episode}/{language}.xml
 
-        let client = Client::new();
-
         let formatted_url = format!("http://thetvdb.com/api/{apikey}/series/{seriesid}/default/{season}/{episode}/{language}.xml",
                                     apikey=self.key,
                                     seriesid=epid.seriesid,
@@ -192,21 +194,7 @@ impl Tvdb{
         println!("Getting {}", url);
 
         // Perform request
-        let res = client.get(url)
-            .header(Connection::close())
-            .send();
-
-        let mut res = match res {
-            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error contacting TVDB: {}", e)}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
-            Ok(r) => r
-        };
-
-        // Read the Response.
-        let mut body = String::new();
-        res.read_to_string(&mut body).unwrap();
-
-        // Parse XML
-        let tree = xmltree::Element::parse(body.as_bytes());
+        let tree = try!(get_xmltree_from_url(url));
         let root = tree.children.first().unwrap();
 
         fn get_text(child: &xmltree::Element, x: &str) -> Option<String>{
