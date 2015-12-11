@@ -170,7 +170,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> Result<xmltree::Element, TvdbError>{
 /// Main interface
 #[derive(Debug,Clone)]
 pub struct Tvdb{
-    key: String,
+    pub key: String,
 }
 
 impl Tvdb{
