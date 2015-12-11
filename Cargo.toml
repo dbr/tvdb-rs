@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["dbr <dbr.onix@gmail.com>"]
 
 [dependencies]
+regex = "0.1"
 hyper = "*"
 xmltree = "*"
 url = "*"

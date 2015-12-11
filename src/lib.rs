@@ -1,11 +1,13 @@
 extern crate xmltree;
 extern crate hyper;
 extern crate url;
+extern crate regex;
 
 use hyper::Client;
 use hyper::header::Connection;
 use std::io::Read;
-
+use std::io::Write;
+use regex::Regex;
 
 /// Turns "123" into 123
 fn intify(instr: &str) -> u32{
@@ -107,22 +109,43 @@ pub struct EpisodeInfo{
 
 
 fn get_xmltree_from_url(url: hyper::Url) -> Result<xmltree::Element, TvdbError>{
-    let client = Client::new();
-    let res = client.get(url)
-        .header(Connection::close())
-        .send();
+    // Check if URL is in cache
+    let urlstr = url.serialize();
+    let re = Regex::new("[^a-zA-Z0-9_-]+").unwrap();
+    let cachefile = format!("cache/cache__{}", re.replace_all(&urlstr, "_"));
 
-    let mut res = match res {
-        Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error contacting TVDB: {}", e)}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
-        Ok(r) => r
-    };
+    let mut body = Vec::new();
 
-    // Read the Response.
-    let mut body = String::new();
-    res.read_to_string(&mut body).unwrap();
+    if std::path::Path::new(&cachefile).exists() {
+        println!("Reading from cached path");
+        let f = std::fs::File::open(&cachefile).ok().expect("failed to open cache file");
+        let mut reader = std::io::BufReader::new(f);
+        reader.read_to_end(&mut body).unwrap();
+    } else {
+        let client = Client::new();
+        let res = client.get(url)
+            .header(Connection::close())
+            .send();
+
+        let mut res = match res {
+            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error contacting TVDB: {}", e)}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
+            Ok(r) => r
+        };
+
+        // Read the Response.
+        res.read_to_end(&mut body).expect("Failed to read response");
+    }
+
+    {
+        println!("Saving XML to {}", cachefile);
+        std::fs::create_dir_all("cache").expect("Failed to create cache dir");
+        let mut f = std::fs::File::create(cachefile).ok().expect("Failed to create file");
+        f.write_all(&mut body).ok().unwrap();
+    }
 
     // Parse XML
-    let tree = xmltree::Element::parse(body.as_bytes());
+    let bs = String::from_utf8(body).unwrap();
+    let tree = xmltree::Element::parse(bs.as_bytes());
 
     return Ok(tree);
 }
