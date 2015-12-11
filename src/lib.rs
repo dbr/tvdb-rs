@@ -57,14 +57,31 @@ impl From<SeriesSearchResult> for EpisodeId{
 /// http://www.thetvdb.com/wiki/index.php?title=API:GetSeries
 #[derive(Debug,Clone)]
 pub struct SeriesSearchResult{
-    pub seriesid: u32, // seriesid is preferred over id according to TVDB wiki
+    /// TheTVDB's series ID ('seriesid' is preferred over 'id' from XML response)
+    pub seriesid: u32,
+
+    /// Series name in the language indicated by `language`
     pub seriesname: String,
+
+    /// Language this episode information is in
     pub language: String,
+
+    /// Description of series
     pub overview: Option<String>,
+
+    /// Relative path to the highest rated banner
     pub banner: Option<String>,
+
+    /// [IMDB](http://www.imdb.com/) ID for this series
     pub imdb_id: Option<String>,
+
+    /// First aired date
     //pub firstaired: Date,
+
+    /// Network this series aired on
     pub network: Option<String>,
+
+    /// [zap2it](http://zap2it.com/) ID for this series
     pub zap2it_id: Option<String>,
 }
 
@@ -231,6 +248,7 @@ impl Tvdb{
         })
     }
 
+    /// Get episode information for given season/episode number
     pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
         self.episode_inner(epid.into(), season, episode)
     }
