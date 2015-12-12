@@ -15,6 +15,23 @@ fn intify(instr: &str) -> u32{
     instr.to_owned().parse::<u32>().unwrap()
 }
 
+/// Used for air-date of an episode etc
+#[derive(Debug,Clone)]
+pub struct Date {
+    year: u32,
+    month: u32,
+    day: u32,
+}
+
+fn dateify(instr: &str) -> Option<Date>{
+    let chunks:Vec<&str> = instr.split("-").collect();
+
+    Some(Date{
+        year: intify(&chunks[0]),
+        month: intify(&chunks[1]),
+        day: intify(&chunks[2]),
+    })
+}
 
 /// Errors in contacting TheTVDB
 #[derive(Debug)]
@@ -76,7 +93,7 @@ pub struct SeriesSearchResult{
     pub imdb_id: Option<String>,
 
     /// First aired date
-    //pub firstaired: Date,
+    pub firstaired: Option<Date>,
 
     /// Network this series aired on
     pub network: Option<String>,
@@ -205,7 +222,7 @@ impl Tvdb{
                 overview:   get_text(child, "Overview"),
                 banner:     get_text(child, "banner"),
                 imdb_id:    get_text(child, "IMDB_ID"),
-                //firstaired: Date,
+                firstaired: get_text(child, "FirstAired").and_then(|x| dateify(&x)),
                 network:    get_text(child, "Network"),
                 zap2it_id:  get_text(child, "zap2it_id"),
             };
