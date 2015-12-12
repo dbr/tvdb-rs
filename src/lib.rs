@@ -18,9 +18,9 @@ fn intify(instr: &str) -> u32{
 /// Used for air-date of an episode etc
 #[derive(Debug,Clone)]
 pub struct Date {
-    year: u32,
-    month: u32,
-    day: u32,
+    pub year: u32,
+    pub month: u32,
+    pub day: u32,
 }
 
 fn dateify(instr: &str) -> Option<Date>{
