@@ -46,27 +46,27 @@ pub enum TvdbError {
 #[derive(Debug,Clone)]
 pub struct EpisodeId{
     seriesid: u32,
-    lang: String,
+    language: String,
 }
 
 impl EpisodeId{
     pub fn new(seriesid: u32, lang: &str) -> EpisodeId{
         EpisodeId{
             seriesid: seriesid,
-            lang: lang.to_owned(),
+            language: lang.to_owned(),
         }
     }
 }
 
 impl From<u32> for EpisodeId{
     fn from(x: u32) -> Self{
-        EpisodeId{seriesid: x, lang: "en".to_owned()}
+        EpisodeId{seriesid: x, language: "en".to_owned()}
     }
 }
 
 impl From<SeriesSearchResult> for EpisodeId{
     fn from(x: SeriesSearchResult) -> Self{
-        EpisodeId{seriesid: x.seriesid, lang: x.language}
+        EpisodeId{seriesid: x.seriesid, language: x.language}
     }
 }
 
@@ -243,7 +243,7 @@ impl Tvdb{
         let formatted_url = format!("http://thetvdb.com/api/{apikey}/series/{seriesid}/default/{season}/{episode}/{language}.xml",
                                     apikey=self.key,
                                     seriesid=epid.seriesid,
-                                    language=epid.lang,
+                                    language=epid.language,
                                     season=season,
                                     episode=episode,
                                     );
