@@ -5,9 +5,9 @@ authors = ["dbr <dbr.onix@gmail.com>"]
 
 [dependencies]
 regex = "0.1"
-hyper = "*"
-xmltree = "*"
-url = "*"
+hyper = "0.7"
+xmltree = "0.2"
+url = "0.5"
 
 [[example]]
 name = "tvdb-lookup"
