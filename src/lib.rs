@@ -3,11 +3,7 @@ extern crate hyper;
 extern crate url;
 extern crate regex;
 
-use hyper::Client;
-use hyper::header::Connection;
-use std::io::Read;
-use std::io::Write;
-use regex::Regex;
+use std::io::{Read,Write};
 
 /// Turns "123" into 123
 fn intify(instr: &str) -> u32{
@@ -145,7 +141,7 @@ pub struct EpisodeInfo{
 fn get_xmltree_from_url(url: hyper::Url) -> Result<xmltree::Element, TvdbError>{
     // Check if URL is in cache
     let urlstr = url.serialize();
-    let re = Regex::new("[^a-zA-Z0-9_-]+").unwrap();
+    let re = regex::Regex::new("[^a-zA-Z0-9_-]+").unwrap();
     let cachefile = format!("cache/cache__{}", re.replace_all(&urlstr, "_"));
 
     let mut body = Vec::new();
@@ -156,9 +152,9 @@ fn get_xmltree_from_url(url: hyper::Url) -> Result<xmltree::Element, TvdbError>{
         let mut reader = std::io::BufReader::new(f);
         reader.read_to_end(&mut body).unwrap();
     } else {
-        let client = Client::new();
+        let client = hyper::Client::new();
         let res = client.get(url)
-            .header(Connection::close())
+            .header(hyper::header::Connection::close())
             .send();
 
         let mut res = match res {
