@@ -193,13 +193,13 @@ fn get_text(child: &xmltree::Element, x: &str) -> Option<String>{
 impl Tvdb{
     /// Initalise API with the given API key. A key can be aquired via
     /// the [API Key Registration page](http://thetvdb.com/?tab=apiregister)
-    pub fn new(key: String) -> Tvdb{
-        Tvdb{key: key}
+    pub fn new<S>(key: S) -> Tvdb where S: Into<String>{
+        Tvdb{key: key.into()}
     }
 
     /// Searches for a given series name.
-    pub fn search(&self, seriesname: String, lang: String) -> Result<Vec<SeriesSearchResult>, TvdbError>{
-        let params = url::form_urlencoded::serialize([("seriesname", &seriesname), ("language", &lang)].iter());
+    pub fn search<S>(&self, seriesname: S, lang: S) -> Result<Vec<SeriesSearchResult>, TvdbError> where S: Into<String>{
+        let params = url::form_urlencoded::serialize([("seriesname", &seriesname.into()), ("language", &lang.into())].iter());
         let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
         let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
         println!("Getting {}", url);
@@ -228,9 +228,9 @@ impl Tvdb{
 
         if results.is_empty(){
             return Err(TvdbError::SeriesNotFound);
+        } else {
+            return Ok(results);
         }
-
-        return Ok(results);
     }
 
     fn episode_inner(&self, epid: EpisodeId, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
@@ -272,35 +272,35 @@ mod test{
     #[test]
     fn search() {
         let api = Tvdb::new(APIKEY.to_owned());
-        let sr = api.search("scrubs".to_owned(), "en".to_owned());
+        let sr = api.search("scrubs", "en");
         assert!(sr.ok().unwrap()[0].seriesname == "Scrubs");
     }
 
     #[test]
     fn nonexist() {
-        let api = Tvdb::new(APIKEY.to_owned());
-        let sr = api.search("ladlkgdklfgsdfglk".to_owned(), "en".to_owned());
+        let api = Tvdb::new(APIKEY);
+        let sr = api.search("ladlkgdklfgsdfglk", "en");
         assert!(sr.is_err());
     }
 
     #[test]
     fn lookup_by_epid(){
-        let api = Tvdb::new(APIKEY.to_owned());
+        let api = Tvdb::new(APIKEY);
         let ep = api.episode(EpisodeId::new(76156, "en"), 1, 2).ok().unwrap();
         assert!(ep.episodename == "My Mentor");
     }
 
     #[test]
     fn lookup_by_u32(){
-        let api = Tvdb::new(APIKEY.to_owned());
+        let api = Tvdb::new(APIKEY);
         let ep = api.episode(76156, 1, 2).ok().unwrap();
         assert!(ep.episodename == "My Mentor");
     }
 
     #[test]
     fn epinfo_default(){
-        let api = Tvdb::new(APIKEY.to_owned());
-        let sr = api.search("scrubs".to_owned(), "en".to_owned()).ok().unwrap();
+        let api = Tvdb::new(APIKEY);
+        let sr = api.search("scrubs", "en").ok().unwrap();
         let ep = api.episode(sr[0].clone(), 1, 2).ok().unwrap();
         assert!(ep.episodename == "My Mentor");
     }
