@@ -186,6 +186,10 @@ pub struct Tvdb{
     pub key: String,
 }
 
+fn get_text(child: &xmltree::Element, x: &str) -> Option<String>{
+    child.get_child(x).and_then(|id_child| id_child.text.clone())
+}
+
 impl Tvdb{
     /// Initalise API with the given API key. A key can be aquired via
     /// the [API Key Registration page](http://thetvdb.com/?tab=apiregister)
@@ -206,10 +210,6 @@ impl Tvdb{
         let mut results : Vec<SeriesSearchResult> = vec![];
 
         for child in tree.children.iter(){
-
-            fn get_text(child: &xmltree::Element, x: &str) -> Option<String>{
-                child.get_child(x).and_then(|id_child| id_child.text.clone())
-            }
 
             let r = SeriesSearchResult{
                 seriesid:   intify(&get_text(child, "seriesid").expect("Search result XML missing 'seriesid' element")),
@@ -249,10 +249,6 @@ impl Tvdb{
         // Perform request
         let tree = try!(get_xmltree_from_url(url));
         let root = tree.children.first().unwrap();
-
-        fn get_text(child: &xmltree::Element, x: &str) -> Option<String>{
-            child.get_child(x).and_then(|id_child| id_child.text.clone())
-        }
 
         // Convert XML into struct
         Ok(EpisodeInfo{
