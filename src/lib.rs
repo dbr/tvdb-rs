@@ -38,6 +38,8 @@ pub enum TvdbError {
     Cancelled,
 }
 
+pub type TvdbResult<T> = Result<T, TvdbError>;
+
 /// Series ID from TheTVDB.com, along with language
 #[derive(Debug,Clone)]
 pub struct EpisodeId{
@@ -138,7 +140,7 @@ pub struct EpisodeInfo{
 }
 
 
-fn get_xmltree_from_url(url: hyper::Url) -> Result<xmltree::Element, TvdbError>{
+fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     // Check if URL is in cache
     let urlstr = url.serialize();
     let re = regex::Regex::new("[^a-zA-Z0-9_-]+").unwrap();
@@ -198,8 +200,20 @@ impl Tvdb{
     }
 
     /// Searches for a given series name.
-    pub fn search<S>(&self, seriesname: S, lang: S) -> Result<Vec<SeriesSearchResult>, TvdbError> where S: Into<String>{
-        let params = url::form_urlencoded::serialize([("seriesname", &seriesname.into()), ("language", &lang.into())].iter());
+    ///
+    /// # Examples
+    /// ```
+    /// # let MY_API_KEY = "0629B785CE550C8D";
+    /// let api = tvdb::Tvdb::new(MY_API_KEY);
+    /// let results = api.search("Scrubs", "en");
+    /// match results{
+    ///    Ok(r) => println!("{}", r[0].seriesname), // Print series name of first result
+    ///    Err(_) => panic!(),
+    /// }
+    /// ```
+    pub fn search<S>(&self, seriesname: S, lang: S) -> TvdbResult<Vec<SeriesSearchResult>> where S: Into<String>{
+        let params = url::form_urlencoded::serialize(
+            [("seriesname", &seriesname.into()), ("language", &lang.into())].iter());
         let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
         let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
         println!("Getting {}", url);
@@ -233,7 +247,7 @@ impl Tvdb{
         }
     }
 
-    fn episode_inner(&self, epid: EpisodeId, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
+    fn episode_inner(&self, epid: EpisodeId, season: u32, episode: u32) -> TvdbResult<EpisodeInfo>{
         // <mirrorpath>/api/<apikey>/series/{seriesid}/default/{season}/{episode}/{language}.xml
 
         let formatted_url = format!("http://thetvdb.com/api/{apikey}/series/{seriesid}/default/{season}/{episode}/{language}.xml",
@@ -258,7 +272,7 @@ impl Tvdb{
     }
 
     /// Get episode information for given season/episode number
-    pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> Result<EpisodeInfo, TvdbError>{
+    pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> TvdbResult<EpisodeInfo>{
         self.episode_inner(epid.into(), season, episode)
     }
 }
