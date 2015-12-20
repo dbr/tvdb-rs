@@ -76,6 +76,15 @@ pub enum TvdbError {
 
 pub type TvdbResult<T> = Result<T, TvdbError>;
 
+
+/// Convert from parse error (e.g for dateify() function)
+impl From<std::num::ParseIntError> for TvdbError{
+    fn from(err: std::num::ParseIntError) -> TvdbError{
+        TvdbError::DataError{reason: format!("{}", err)} // FIXME
+    }
+}
+
+
 /// Series ID from TheTVDB.com, along with language
 #[derive(Debug,Clone)]
 pub struct EpisodeId{
