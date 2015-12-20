@@ -22,15 +22,15 @@ pub struct Date {
 fn dateify(instr: &str) -> TvdbResult<Date>{
     let chunks:Vec<&str> = instr.split("-").collect();
 
-    let invalid_date = TvdbError::DataError{reason: format!("Malformed date: {}", instr)};
+    let invalid_date = TvdbError::DataError{reason: format!("Malformed YYYY-MM-DD date: {}", instr)};
 
-    let year  : TvdbResult<&&str> = chunks.get(0).ok_or(invalid_date.clone());
-    let month : TvdbResult<&&str> = chunks.get(0).ok_or(invalid_date.clone());
-    let day   : TvdbResult<&&str> = chunks.get(0).ok_or(invalid_date.clone());
+    let year  = chunks.get(0).ok_or(invalid_date.clone());
+    let month = chunks.get(1).ok_or(invalid_date.clone());
+    let day   = chunks.get(2).ok_or(invalid_date.clone());
 
-    let year = match year{Ok(x) => x, Err(_) => return Err(invalid_date.clone())};
-    let month = match month{Ok(x) => x, Err(_) => return Err(invalid_date.clone())};
-    let day = match day{Ok(x) => x, Err(_) => return Err(invalid_date.clone())};
+    let year = try!(year);
+    let month = try!(month);
+    let day = try!(day);
 
     let year = try!(intify(year));
     let month = try!(intify(month));
@@ -42,6 +42,27 @@ fn dateify(instr: &str) -> TvdbResult<Date>{
         day: day,
     })
 }
+
+#[test]
+fn test_date_parser_good() {
+    let d = dateify("2001-02-03");
+    println!("Parsed date as {:?}", d);
+
+    assert!(d.is_ok());
+    let d = d.unwrap();
+    assert!(d.year == 2001);
+    assert!(d.month == 2);
+    assert!(d.day == 3);
+}
+
+
+#[test]
+fn test_date_parser_bad() {
+    assert!(dateify("blah").is_err());
+    assert!(dateify("2001-02").is_err());
+    assert!(dateify("2001-02-blah").is_err());
+}
+
 
 /// Errors in contacting TheTVDB
 #[derive(Debug,Clone)]
