@@ -22,11 +22,12 @@ pub struct Date {
 fn dateify(instr: &str) -> TvdbResult<Date>{
     let chunks:Vec<&str> = instr.split("-").collect();
 
-    let invalid_date = TvdbError::DataError{reason: format!("Malformed YYYY-MM-DD date: {}", instr)};
+    let invalid_date = || {TvdbError::DataError{reason: format!("Malformed YYYY-MM-DD date: {}", instr)}};
 
-    let year  = chunks.get(0).ok_or(invalid_date.clone());
-    let month = chunks.get(1).ok_or(invalid_date.clone());
-    let day   = chunks.get(2).ok_or(invalid_date.clone());
+    // TODO: Remove need for .clone()?
+    let year  = chunks.get(0).ok_or(invalid_date());
+    let month = chunks.get(1).ok_or(invalid_date());
+    let day   = chunks.get(2).ok_or(invalid_date());
 
     let year = try!(year);
     let month = try!(month);
@@ -65,7 +66,7 @@ fn test_date_parser_bad() {
 
 
 /// Errors in contacting TheTVDB
-#[derive(Debug,Clone)]
+#[derive(Debug)]
 pub enum TvdbError {
     SeriesNotFound,
     CommunicationError{reason: String},
