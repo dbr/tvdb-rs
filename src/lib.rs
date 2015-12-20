@@ -6,9 +6,9 @@ extern crate regex;
 use std::io::{Read,Write};
 
 /// Turns "123" into 123
-fn intify(instr: &str) -> u32{
+fn intify(instr: &str) -> Result<u32, std::num::ParseIntError>{
     // TODO: Better error handling
-    instr.to_owned().parse::<u32>().unwrap()
+    instr.to_owned().parse::<u32>()
 }
 
 /// Used for air-date of an episode etc
@@ -19,18 +19,32 @@ pub struct Date {
     pub day: u32,
 }
 
-fn dateify(instr: &str) -> Option<Date>{
+fn dateify(instr: &str) -> TvdbResult<Date>{
     let chunks:Vec<&str> = instr.split("-").collect();
 
-    Some(Date{
-        year: intify(&chunks[0]),
-        month: intify(&chunks[1]),
-        day: intify(&chunks[2]),
+    let invalid_date = TvdbError::DataError{reason: format!("Malformed date: {}", instr)};
+
+    let year  : TvdbResult<&&str> = chunks.get(0).ok_or(invalid_date.clone());
+    let month : TvdbResult<&&str> = chunks.get(0).ok_or(invalid_date.clone());
+    let day   : TvdbResult<&&str> = chunks.get(0).ok_or(invalid_date.clone());
+
+    let year = match year{Ok(x) => x, Err(_) => return Err(invalid_date.clone())};
+    let month = match month{Ok(x) => x, Err(_) => return Err(invalid_date.clone())};
+    let day = match day{Ok(x) => x, Err(_) => return Err(invalid_date.clone())};
+
+    let year = try!(intify(year));
+    let month = try!(intify(month));
+    let day = try!(intify(day));
+
+    Ok(Date{
+        year: year,
+        month: month,
+        day: day,
     })
 }
 
 /// Errors in contacting TheTVDB
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum TvdbError {
     SeriesNotFound,
     CommunicationError{reason: String},
@@ -226,13 +240,13 @@ impl Tvdb{
         for child in tree.children.iter(){
 
             let r = SeriesSearchResult{
-                seriesid:   intify(&get_text(child, "seriesid").expect("Search result XML missing 'seriesid' element")),
+                seriesid:   intify(&get_text(child, "seriesid").expect("Search result XML missing 'seriesid' element")).ok().unwrap(),
                 seriesname: get_text(child, "SeriesName").expect("Search result XML Missing 'SeriesName' element"),
                 language:   get_text(child, "language").expect("Search result XML missing 'language' element"),
                 overview:   get_text(child, "Overview"),
                 banner:     get_text(child, "banner"),
                 imdb_id:    get_text(child, "IMDB_ID"),
-                firstaired: get_text(child, "FirstAired").and_then(|x| dateify(&x)),
+                firstaired: get_text(child, "FirstAired").and_then(|x| dateify(&x).ok()),
                 network:    get_text(child, "Network"),
                 zap2it_id:  get_text(child, "zap2it_id"),
             };
@@ -266,7 +280,7 @@ impl Tvdb{
 
         // Convert XML into struct
         Ok(EpisodeInfo{
-            id: intify(&get_text(root, "id").unwrap()),
+            id: intify(&get_text(root, "id").unwrap()).ok().unwrap(),
             episodename: get_text(root, "EpisodeName").unwrap(),
         })
     }
