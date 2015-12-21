@@ -7,7 +7,6 @@ use std::io::{Read,Write};
 
 /// Turns "123" into 123
 fn intify(instr: &str) -> Result<u32, std::num::ParseIntError>{
-    // TODO: Better error handling
     instr.to_owned().parse::<u32>()
 }
 
@@ -19,28 +18,23 @@ pub struct Date {
     pub day: u32,
 }
 
+/// Parse YYYY-MM-DD formatted string into `Date` struct
 fn dateify(instr: &str) -> TvdbResult<Date>{
-    let chunks:Vec<&str> = instr.split("-").collect();
-
     let invalid_date = || {TvdbError::DataError{reason: format!("Malformed YYYY-MM-DD date: {}", instr)}};
 
-    // TODO: Remove need for .clone()?
-    let year  = chunks.get(0).ok_or(invalid_date());
-    let month = chunks.get(1).ok_or(invalid_date());
-    let day   = chunks.get(2).ok_or(invalid_date());
+    let chunks:Vec<&str> = instr.split("-").collect();
+    if chunks.len() != 3 {
+        return Err(invalid_date());
+    }
 
-    let year = try!(year);
-    let month = try!(month);
-    let day = try!(day);
-
-    let year = try!(intify(year));
-    let month = try!(intify(month));
-    let day = try!(intify(day));
+    let year  = try!(chunks.get(0).ok_or(invalid_date()));
+    let month = try!(chunks.get(1).ok_or(invalid_date()));
+    let day   = try!(chunks.get(2).ok_or(invalid_date()));
 
     Ok(Date{
-        year: year,
-        month: month,
-        day: day,
+        year: try!(intify(year)),
+        month: try!(intify(month)),
+        day: try!(intify(day)),
     })
 }
 
