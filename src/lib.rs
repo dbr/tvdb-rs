@@ -107,6 +107,12 @@ impl From<SeriesSearchResult> for EpisodeId{
     }
 }
 
+impl<'a> From<&'a SeriesSearchResult> for EpisodeId{
+    fn from(x: &SeriesSearchResult) -> Self{
+        EpisodeId{seriesid: x.seriesid.clone(), language: x.language.clone()}
+    }
+}
+
 /// Series info as returned from TheTVDB's series search method:
 /// http://www.thetvdb.com/wiki/index.php?title=API:GetSeries
 #[derive(Debug,Clone)]

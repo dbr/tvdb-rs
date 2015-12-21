@@ -36,6 +36,6 @@ fn lookup_by_u32(){
 fn epinfo_default(){
     let api = Tvdb::new(APIKEY);
     let sr = api.search("scrubs", "en").ok().unwrap();
-    let ep = api.episode(sr[0].clone(), 1, 2).ok().unwrap();
+    let ep = api.episode(&sr[0], 1, 2).ok().unwrap();
     assert!(ep.episodename == "My Mentor");
 }
