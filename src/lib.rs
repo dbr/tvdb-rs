@@ -186,6 +186,8 @@ pub struct EpisodeInfo{
 
 
 fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
+    let enable_cache = false;
+
     // Check if URL is in cache
     let urlstr = url.serialize();
     let re = regex::Regex::new("[^a-zA-Z0-9_-]+").unwrap();
@@ -193,7 +195,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
 
     let mut body = Vec::new();
 
-    if std::path::Path::new(&cachefile).exists() {
+    if enable_cache && std::path::Path::new(&cachefile).exists() {
         println!("Reading from cached path");
         let f = std::fs::File::open(&cachefile).ok().expect("failed to open cache file");
         let mut reader = std::io::BufReader::new(f);
@@ -213,7 +215,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
         res.read_to_end(&mut body).expect("Failed to read response");
     }
 
-    {
+    if enable_cache {
         println!("Saving XML to {}", cachefile);
         std::fs::create_dir_all("cache").expect("Failed to create cache dir");
         let mut f = std::fs::File::create(cachefile).ok().expect("Failed to create file");
