@@ -82,8 +82,8 @@ impl From<std::num::ParseIntError> for TvdbError{
 /// Series ID from TheTVDB.com, along with language
 #[derive(Debug,Clone)]
 pub struct EpisodeId{
-    seriesid: u32,
-    language: String,
+    pub seriesid: u32,
+    pub language: String,
 }
 
 impl EpisodeId{
