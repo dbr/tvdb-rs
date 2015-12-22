@@ -166,7 +166,7 @@ pub struct EpisodeInfo{
     pub season_number: u32, // SeasonNumber
 
     /// An unsigned integer indicating the season the episode was in according to the DVD release. Usually is the same as EpisodeNumber but can be different.
-    pub season_dvd: u32, // DVD_season
+    pub season_dvd: Option<u32>, // DVD_season
 
     /// An unsigned integer or decimal. Cannot be null. This returns the value of DVD_season if that field is not null. Otherwise it returns the value from SeasonNumber. The field can be used as a simple way of prioritizing DVD order over aired order in your program. In general it's best to avoid using this field as you can accomplish the same task locally and have more control if you use the DVD_season and SeasonNumber fields separately.
     /// (note: missing from episodes so made optional)
@@ -184,7 +184,7 @@ pub struct EpisodeInfo{
     // DVD_discid - deprecated
 
     /// A decimal with one decimal and can be used to join episodes together. Can be null, usually used to join episodes that aired as two episodes but were released on DVD as a single episode. If you see an episode 1.1 and 1.2 that means both records should be combined to make episode 1. Cartoons are also known to combine up to 9 episodes together, for example Animaniacs season two.
-    pub episode_dvd: f32, // DVD_episodenumber
+    pub episode_dvd: Option<f32>, // DVD_episodenumber
 
     /// A string containing the date the series first aired in plain text using the format "YYYY-MM-DD". Can be null.
     pub first_aired: Option<Date>, // FirstAired
@@ -395,11 +395,11 @@ impl Tvdb{
             episode_name:         get_text(root, "EpisodeName").expect("episode_name missing"),
             first_aired:         get_text(root, "FirstAired").and_then(|x| dateify(&x).ok()),
             season_number:       get_text(root, "SeasonNumber").and_then(|x| intify(&x).ok()).expect("season_number missing"),
-            season_dvd:          get_text(root, "DVD_season").and_then(|x| intify(&x).ok()).expect("season_dvd missing"),
+            season_dvd:          get_text(root, "DVD_season").and_then(|x| intify(&x).ok()),
             season_combined:     get_text(root, "Combined_season").and_then(|x| floatify(&x).ok()),
             episode_number:      get_text(root, "EpisodeNumber").and_then(|x| intify(&x).ok()).expect("episode_number missing"),
             episode_combined:    get_text(root, "Combined_episodenumber").and_then(|x| floatify(&x).ok()),
-            episode_dvd:         get_text(root, "DVD_episodenumber").and_then(|x| floatify(&x).ok()).expect("episode_dvd missing"),
+            episode_dvd:         get_text(root, "DVD_episodenumber").and_then(|x| floatify(&x).ok()),
             imdb_id:             get_text(root, "IMDB_ID"),
             language:            get_text(root, "Language").expect("language missing"),
             overview:            get_text(root, "Overview"),
