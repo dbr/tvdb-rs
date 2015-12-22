@@ -161,7 +161,7 @@ pub struct EpisodeInfo{
     // EpImgFlag
     pub episodename: String, // EpisodeName
     // EpisodeNumber
-    // FirstAired
+    pub firstaired: Option<Date>, // FirstAired
     // GuestStars
     // IMDB_ID
     // Language
@@ -315,6 +315,7 @@ impl Tvdb{
         Ok(EpisodeInfo{
             id: intify(&get_text(root, "id").unwrap()).ok().unwrap(),
             episodename: get_text(root, "EpisodeName").unwrap(),
+            firstaired: get_text(root, "FirstAired").and_then(|x| dateify(&x).ok()),
         })
     }
 
