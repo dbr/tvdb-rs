@@ -22,14 +22,14 @@ fn nonexist() {
 fn lookup_by_epid(){
     let api = Tvdb::new(APIKEY);
     let ep = api.episode(EpisodeId::new(76156, "en"), 1, 2).ok().unwrap();
-    assert!(ep.episodename == "My Mentor");
+    assert!(ep.episode_name == "My Mentor");
 }
 
 #[test]
 fn lookup_by_u32(){
     let api = Tvdb::new(APIKEY);
     let ep = api.episode(76156, 1, 2).ok().unwrap();
-    assert!(ep.episodename == "My Mentor");
+    assert!(ep.episode_name == "My Mentor");
 }
 
 #[test]
@@ -37,5 +37,5 @@ fn epinfo_default(){
     let api = Tvdb::new(APIKEY);
     let sr = api.search("scrubs", "en").ok().unwrap();
     let ep = api.episode(&sr[0], 1, 2).ok().unwrap();
-    assert!(ep.episodename == "My Mentor");
+    assert!(ep.episode_name == "My Mentor");
 }

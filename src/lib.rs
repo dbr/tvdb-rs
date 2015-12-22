@@ -141,7 +141,7 @@ pub struct SeriesSearchResult{
     pub imdb_id: Option<String>,
 
     /// First aired date
-    pub firstaired: Option<Date>,
+    pub first_aired: Option<Date>,
 
     /// Network this series aired on
     pub network: Option<String>,
@@ -159,7 +159,7 @@ pub struct EpisodeInfo{
     pub id: u32, //id
 
     /// A string containing the episode name in the language requested. Will return the English name if no translation is available in the language requested.
-    pub episodename: String, // EpisodeName
+    pub episode_name: String, // EpisodeName
 
 
     /// An unsigned integer representing the season number for the episode according to the aired order. Cannot be null.
@@ -187,7 +187,7 @@ pub struct EpisodeInfo{
     pub episode_dvd: f32, // DVD_episodenumber
 
     /// A string containing the date the series first aired in plain text using the format "YYYY-MM-DD". Can be null.
-    pub firstaired: Option<Date>, // FirstAired
+    pub first_aired: Option<Date>, // FirstAired
 
     /// An alphanumeric string containing the IMDB ID for the series. Can be null.
     pub imdb_id: Option<String>, // IMDB_ID
@@ -199,7 +199,7 @@ pub struct EpisodeInfo{
     pub overview: Option<String>, // Overview
 
     /// An alphanumeric string. Can be null.
-    pub productioncode: Option<String>, // ProductionCode
+    pub production_code: Option<String>, // ProductionCode
 
     /// The average rating our users have rated the series out of 10, rounded to 1 decimal place. Can be null.
     pub rating: Option<f32>, // Rating
@@ -208,7 +208,7 @@ pub struct EpisodeInfo{
     pub rating_count: Option<u32>, // RatingCount
 
     /// A pipe delimited string of guest stars in plain text. Can be null.
-    pub gueststars: Option<String>, // GuestStars
+    pub guest_stars: Option<String>, // GuestStars
 
     /// A pipe delimited string of directors in plain text. Can be null.
     pub director: Option<String>, // Director
@@ -220,27 +220,27 @@ pub struct EpisodeInfo{
     pub episode_absolute: Option<u32>, // absolute_number
 
     /// An unsigned integer indicating the season number this episode comes after. This field is only available for special episodes. Can be null.
-    pub airsafter_season: Option<u32>, // airsafter_season
+    pub airs_after_season: Option<u32>, // airsafter_season
 
     /// An unsigned integer indicating the episode number this special episode airs before. Must be used in conjunction with airsbefore_season, do not with airsafter_season. This field is only available for special episodes. Can be null.
-    pub airsbefore_episode: Option<u32>, // airsbefore_episode
+    pub airs_before_episode: Option<u32>, // airsbefore_episode
 
     /// An unsigned integer indicating the season number this special episode airs before. Should be used in conjunction with airsbefore_episode for exact placement. This field is only available for special episodes. Can be null.
-    pub airsbefore_season: Option<u32>, // airsbefore_season
+    pub airs_before_season: Option<u32>, // airsbefore_season
 
     /// An unsigned integer assigned by our site to the season. Cannot be null.
-    pub seasonid: u32, // seasonid
+    pub season_id: u32, // seasonid
 
     /// An unsigned integer assigned by our site to the series. It does not change and will always represent the same series. Cannot be null.
-    pub seriesid: u32, // seriesid
+    pub series_id: u32, // seriesid
 
     /// A string which should be appended to <mirrorpath>/banners/ to determine the actual location of the artwork. Returns the location of the episode image. Can be null.
     pub thumbnail: Option<String>, // filename
 
     /// An unsigned integer from 1-6.
     ///
-    /// 1. 4:3 - Indicates an image is a proper 4:3 (1.31 to 1.35) aspect ratio.
-    /// 2. 16:9 - Indicates an image is a proper 16:9 (1.739 to 1.818) aspect ratio.
+    /// 1. Indicates an image is a proper 4:3 (1.31 to 1.35) aspect ratio.
+    /// 2. Indicates an image is a proper 16:9 (1.739 to 1.818) aspect ratio.
     /// 3. Invalid Aspect Ratio - Indicates anything not in a 4:3 or 16:9 ratio. We don't bother listing any other non standard ratios.
     /// 4. Image too Small - Just means the image is smaller then 300x170.
     /// 5. Black Bars - Indicates there are black bars along one or all four sides of the image.
@@ -259,7 +259,7 @@ pub struct EpisodeInfo{
     pub thumbnail_width: Option<u32>, // thumb_width
 
     /// Unix time stamp indicating the last time any changes were made to the episode. Can be null.
-    pub lastupdated: Option<u32>, // lastupdated
+    pub last_updated: Option<u32>, // lastupdated
 }
 
 
@@ -351,15 +351,15 @@ impl Tvdb{
         for child in tree.children.iter(){
 
             let r = SeriesSearchResult{
-                seriesid:   intify(&get_text(child, "seriesid").expect("Search result XML missing 'seriesid' element")).ok().unwrap(),
-                seriesname: get_text(child, "SeriesName").expect("Search result XML Missing 'SeriesName' element"),
-                language:   get_text(child, "language").expect("Search result XML missing 'language' element"),
-                overview:   get_text(child, "Overview"),
-                banner:     get_text(child, "banner"),
-                imdb_id:    get_text(child, "IMDB_ID"),
-                firstaired: get_text(child, "FirstAired").and_then(|x| dateify(&x).ok()),
-                network:    get_text(child, "Network"),
-                zap2it_id:  get_text(child, "zap2it_id"),
+                seriesid:    intify(&get_text(child, "seriesid").expect("Search result XML missing 'seriesid' element")).ok().unwrap(),
+                seriesname:  get_text(child, "SeriesName").expect("Search result XML Missing 'SeriesName' element"),
+                language:    get_text(child, "language").expect("Search result XML missing 'language' element"),
+                overview:    get_text(child, "Overview"),
+                banner:      get_text(child, "banner"),
+                imdb_id:     get_text(child, "IMDB_ID"),
+                first_aired: get_text(child, "FirstAired").and_then(|x| dateify(&x).ok()),
+                network:     get_text(child, "Network"),
+                zap2it_id:   get_text(child, "zap2it_id"),
             };
 
             results.push(r);
@@ -392,8 +392,8 @@ impl Tvdb{
         // Convert XML into struct
         Ok(EpisodeInfo{
             id:                  get_text(root, "id").and_then(|x| intify(&x).ok()).expect("id missing"),
-            episodename:         get_text(root, "EpisodeName").expect("episodename missing"),
-            firstaired:          get_text(root, "FirstAired").and_then(|x| dateify(&x).ok()),
+            episode_name:         get_text(root, "EpisodeName").expect("episode_name missing"),
+            first_aired:         get_text(root, "FirstAired").and_then(|x| dateify(&x).ok()),
             season_number:       get_text(root, "SeasonNumber").and_then(|x| intify(&x).ok()).expect("season_number missing"),
             season_dvd:          get_text(root, "DVD_season").and_then(|x| intify(&x).ok()).expect("season_dvd missing"),
             season_combined:     get_text(root, "Combined_season").and_then(|x| floatify(&x).ok()),
@@ -403,24 +403,24 @@ impl Tvdb{
             imdb_id:             get_text(root, "IMDB_ID"),
             language:            get_text(root, "Language").expect("language missing"),
             overview:            get_text(root, "Overview"),
-            productioncode:      get_text(root, "ProductionCode"),
+            production_code:     get_text(root, "ProductionCode"),
             rating:              get_text(root, "Rating").and_then(|x| floatify(&x).ok()),
             rating_count:        get_text(root, "RatingCount").and_then(|x| intify(&x).ok()),
-            gueststars:          get_text(root, "GuestStars"),
+            guest_stars:         get_text(root, "GuestStars"),
             director:            get_text(root, "Director"),
             writer:              get_text(root, "Writer"),
             episode_absolute:    get_text(root, "absolute_number").and_then(|x| intify(&x).ok()),
-            airsafter_season:    get_text(root, "airsafter_season").and_then(|x| intify(&x).ok()),
-            airsbefore_episode:  get_text(root, "airsbefore_episode").and_then(|x| intify(&x).ok()),
-            airsbefore_season:   get_text(root, "airsbefore_season").and_then(|x| intify(&x).ok()),
-            seasonid:            get_text(root, "seasonid").and_then(|x| intify(&x).ok()).expect("seasonid missing"),
-            seriesid:            get_text(root, "seriesid").and_then(|x| intify(&x).ok()).expect("seriesid missing"),
+            airs_after_season:   get_text(root, "airsafter_season").and_then(|x| intify(&x).ok()),
+            airs_before_episode: get_text(root, "airsbefore_episode").and_then(|x| intify(&x).ok()),
+            airs_before_season:  get_text(root, "airsbefore_season").and_then(|x| intify(&x).ok()),
+            season_id:           get_text(root, "seasonid").and_then(|x| intify(&x).ok()).expect("seasonid missing"),
+            series_id:           get_text(root, "seriesid").and_then(|x| intify(&x).ok()).expect("seriesid missing"),
             thumbnail:           get_text(root, "filename"),
             thumbnail_flag:      get_text(root, "EpImgFlag").and_then(|x| intify(&x).ok()),
             thumbnail_added:     get_text(root, "thumb_added").and_then(|x| dateify(&x).ok()),
             thumbnail_width:     get_text(root, "thumb_width").and_then(|x| intify(&x).ok()),
             thumbnail_height:    get_text(root, "thumb_width").and_then(|x| intify(&x).ok()),
-            lastupdated:         get_text(root, "lastupdated").and_then(|x| intify(&x).ok()),
+            last_updated:        get_text(root, "lastupdated").and_then(|x| intify(&x).ok()),
 
         })
     }
