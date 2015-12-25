@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+
 extern crate xmltree;
 extern crate hyper;
 extern crate url;
@@ -274,7 +277,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     let mut body = Vec::new();
 
     if enable_cache && std::path::Path::new(&cachefile).exists() {
-        println!("Reading from cached path");
+        debug!("Reading from cached path");
         let f = std::fs::File::open(&cachefile).ok().expect("failed to open cache file");
         let mut reader = std::io::BufReader::new(f);
         reader.read_to_end(&mut body).unwrap();
@@ -294,7 +297,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     }
 
     if enable_cache {
-        println!("Saving XML to {}", cachefile);
+        debug!("Saving XML to {}", cachefile);
         std::fs::create_dir_all("cache").expect("Failed to create cache dir");
         let mut f = std::fs::File::create(cachefile).ok().expect("Failed to create file");
         f.write_all(&mut body).ok().unwrap();
@@ -341,7 +344,7 @@ impl Tvdb{
             [("seriesname", &seriesname.into()), ("language", &lang.into())].iter());
         let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
         let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
-        println!("Getting {}", url);
+        debug!("Getting {}", url);
 
         let tree = try!(get_xmltree_from_url(url));
 
@@ -383,7 +386,7 @@ impl Tvdb{
                                     episode=episode,
                                     );
         let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
-        println!("Getting {}", url);
+        debug!("Getting {}", url);
 
         // Perform request
         let tree = try!(get_xmltree_from_url(url));
