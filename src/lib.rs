@@ -339,9 +339,9 @@ impl Tvdb{
     ///    Err(_) => panic!(),
     /// }
     /// ```
-    pub fn search<S>(&self, seriesname: S, lang: S) -> TvdbResult<Vec<SeriesSearchResult>> where S: Into<String>{
+    pub fn search(&self, seriesname: &str, lang: &str) -> TvdbResult<Vec<SeriesSearchResult>> {
         let params = url::form_urlencoded::serialize(
-            [("seriesname", &seriesname.into()), ("language", &lang.into())].iter());
+            [("seriesname", seriesname), ("language", lang)].iter());
         let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
         let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
         debug!("Getting {}", url);
