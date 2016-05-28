@@ -70,6 +70,7 @@ fn test_date_parser_bad() {
 /// Errors in contacting TheTVDB
 #[derive(Debug)]
 pub enum TvdbError {
+    InternalError{reason: String},
     SeriesNotFound,
     CommunicationError{reason: String},
     DataError{reason: String},
@@ -347,7 +348,10 @@ impl Tvdb{
             .finish();
 
         let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
-        let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
+        let url = try!(
+            hyper::Url::parse(&formatted_url)
+            .map_err(|x| TvdbError::InternalError{
+                reason: format!("Invalid URL {}: {}", formatted_url, x)}));
         debug!("Getting {}", url);
 
         let tree = try!(get_xmltree_from_url(url));
@@ -398,17 +402,17 @@ impl Tvdb{
 
         // Convert XML into struct
         Ok(EpisodeInfo{
-            id:                  get_text(root, "id").and_then(|x| intify(&x).ok()).expect("id missing"),
-            episode_name:         get_text(root, "EpisodeName").expect("episode_name missing"),
+            id:                  try!(get_text(root, "id").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"id missing".to_owned()})),
+            episode_name:        try!(get_text(root, "EpisodeName").ok_or_else(|| TvdbError::DataError{reason:"EpisodeName missing".to_owned()})),
             first_aired:         get_text(root, "FirstAired").and_then(|x| dateify(&x).ok()),
-            season_number:       get_text(root, "SeasonNumber").and_then(|x| intify(&x).ok()).expect("season_number missing"),
+            season_number:       try!(get_text(root, "SeasonNumber").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"SeasonNumber missing".to_owned()})),
             season_dvd:          get_text(root, "DVD_season").and_then(|x| intify(&x).ok()),
             season_combined:     get_text(root, "Combined_season").and_then(|x| floatify(&x).ok()),
-            episode_number:      get_text(root, "EpisodeNumber").and_then(|x| intify(&x).ok()).expect("episode_number missing"),
+            episode_number:      try!(get_text(root, "EpisodeNumber").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"EpisodeNumber missing".to_owned()})),
             episode_combined:    get_text(root, "Combined_episodenumber").and_then(|x| floatify(&x).ok()),
             episode_dvd:         get_text(root, "DVD_episodenumber").and_then(|x| floatify(&x).ok()),
             imdb_id:             get_text(root, "IMDB_ID"),
-            language:            get_text(root, "Language").expect("language missing"),
+            language:            try!(get_text(root, "Language").ok_or_else(|| TvdbError::DataError{reason:"language missing".to_owned()})),
             overview:            get_text(root, "Overview"),
             production_code:     get_text(root, "ProductionCode"),
             rating:              get_text(root, "Rating").and_then(|x| floatify(&x).ok()),
@@ -420,8 +424,8 @@ impl Tvdb{
             airs_after_season:   get_text(root, "airsafter_season").and_then(|x| intify(&x).ok()),
             airs_before_episode: get_text(root, "airsbefore_episode").and_then(|x| intify(&x).ok()),
             airs_before_season:  get_text(root, "airsbefore_season").and_then(|x| intify(&x).ok()),
-            season_id:           get_text(root, "seasonid").and_then(|x| intify(&x).ok()).expect("seasonid missing"),
-            series_id:           get_text(root, "seriesid").and_then(|x| intify(&x).ok()).expect("seriesid missing"),
+            season_id:           try!(get_text(root, "seasonid").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"seasonid missing".to_owned()})),
+            series_id:           try!(get_text(root, "seriesid").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"seriesid missing".to_owned()})),
             thumbnail:           get_text(root, "filename"),
             thumbnail_flag:      get_text(root, "EpImgFlag").and_then(|x| intify(&x).ok()),
             thumbnail_added:     get_text(root, "thumb_added").and_then(|x| dateify(&x).ok()),
