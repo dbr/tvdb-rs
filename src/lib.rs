@@ -270,7 +270,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     let enable_cache = false;
 
     // Check if URL is in cache
-    let urlstr = url.serialize();
+    let urlstr = url.clone().into_string();
     let re = regex::Regex::new("[^a-zA-Z0-9_-]+").unwrap();
     let cachefile = format!("cache/cache__{}", re.replace_all(&urlstr, "_"));
 
@@ -307,7 +307,8 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     let bs = String::from_utf8(body).unwrap();
     let tree = xmltree::Element::parse(bs.as_bytes());
 
-    return Ok(tree);
+    return tree.map_err(
+        |e| TvdbError::DataError{reason: format!("XML error: {}", e)});
 }
 
 /// Main interface
@@ -340,8 +341,11 @@ impl Tvdb{
     /// }
     /// ```
     pub fn search(&self, seriesname: &str, lang: &str) -> TvdbResult<Vec<SeriesSearchResult>> {
-        let params = url::form_urlencoded::serialize(
-            [("seriesname", seriesname), ("language", lang)].iter());
+        let params = url::form_urlencoded::Serializer::new(String::new())
+            .append_pair("seriesname", seriesname)
+            .append_pair("language", lang)
+            .finish();
+
         let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
         let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
         debug!("Getting {}", url);

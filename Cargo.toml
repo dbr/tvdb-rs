@@ -11,10 +11,10 @@ license = "Unlicense"
 
 [dependencies]
 regex = "0.1"
-hyper = "0.7"
-xmltree = "0.2"
-url = "0.5"
-log = "0.3.4"
+hyper = "0.9"
+xmltree = "0.3"
+url = "*"
+log = "*"
 
 [dev-dependencies]
 argparse = "*"
