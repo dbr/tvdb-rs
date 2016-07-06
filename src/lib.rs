@@ -437,6 +437,22 @@ impl Tvdb{
     }
 
     /// Get episode information for given season/episode number
+    ///
+    /// # Examples
+    /// ```
+    /// # let MY_API_KEY = "0629B785CE550C8D";
+    /// let api = tvdb::Tvdb::new(MY_API_KEY);
+    /// // Perform search for series
+    /// let sr = api.search("scrubs", "en").unwrap();
+    /// // Get the first SeriesSearchResult:
+    /// let ref first_result = sr[0];
+    /// // Then lookup the 23rd episode of the first result:
+    /// let ep = api.episode(first_result, 1, 23).ok().unwrap();
+    /// println!("{}", ep.episode_name);
+    /// // Alternatively, lookup the 23rd episode for the given series ID:
+    /// let ep_by_id = api.episode(76156, 1, 23).ok().unwrap();
+    /// println!("{}", ep_by_id.episode_name);
+    /// ```
     pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> TvdbResult<EpisodeInfo>{
         self.episode_inner(epid.into(), season, episode)
     }
