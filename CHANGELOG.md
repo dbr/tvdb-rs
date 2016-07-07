@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 Change log format based on
 ["Keep a CHANGELOG"](http://keepachangelog.com/).
 
+## [0.3.1] - 2016-07-08
+- Explicit dependency on `log` version to keep [Cargo happy](http://doc.crates.io/faq.html#can-libraries-use--as-a-version-for-their-dependencies)
+
 ## [0.3.0] - 2016-07-08
 - No longer panics on invalid XML, returns descriptive
   TvdbError::CommunicationError for HTTP errors and various other improved
