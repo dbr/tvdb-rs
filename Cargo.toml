@@ -18,6 +18,11 @@ log = "*"
 
 [dev-dependencies]
 argparse = "*"
+env_logger = "*"
+rand = "0.3"
 
 [[example]]
 name = "tvdb-lookup"
+
+[[example]]
+name = "tvdb-random"
