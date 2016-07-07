@@ -283,15 +283,23 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
         let mut reader = std::io::BufReader::new(f);
         reader.read_to_end(&mut body).unwrap();
     } else {
+        debug!("Fetching URL {}", url);
         let client = hyper::Client::new();
-        let res = client.get(url)
+        let res = client.get(url.clone())
             .header(hyper::header::Connection::close())
             .send();
 
         let mut res = match res {
-            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error contacting TVDB: {}", e)}), // FIXME: http://stackoverflow.com/questions/28911833/error-handling-best-practices
+            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error accessing {} - {}", url, e)}),
             Ok(r) => r
         };
+
+        // Ensure status code is good
+        if !res.status.is_success() {
+            return Err(
+                TvdbError::CommunicationError{
+                    reason: format!("HTTP error accessing {} - {}", url, res.status)});
+        }
 
         // Read the Response.
         res.read_to_end(&mut body).expect("Failed to read response");
