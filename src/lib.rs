@@ -308,8 +308,8 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     let bs = String::from_utf8(body).unwrap();
     let tree = xmltree::Element::parse(bs.as_bytes());
 
-    return tree.map_err(
-        |e| TvdbError::DataError{reason: format!("XML error: {}", e)});
+    return tree.map_err(|e|
+        TvdbError::DataError{reason: format!("Error parsing XML from TheTVDB.com: {}", e)});
 }
 
 /// Main interface
