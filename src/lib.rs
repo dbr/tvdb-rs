@@ -406,12 +406,16 @@ impl Tvdb{
 
         // Perform request
         let tree = try!(get_xmltree_from_url(url));
-        let root = tree.children.first().unwrap();
+        let root = tree.children.first().expect("No children");
+
+        fn maybe_get_text(root: &xmltree::Element, name: &str) -> TvdbResult<String>{
+            get_text(root, name).ok_or_else(|| TvdbError::DataError{reason:format!("Element {} missing", name)})
+        }
 
         // Convert XML into struct
         Ok(EpisodeInfo{
             id:                  try!(get_text(root, "id").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"id missing".to_owned()})),
-            episode_name:        try!(get_text(root, "EpisodeName").ok_or_else(|| TvdbError::DataError{reason:"EpisodeName missing".to_owned()})),
+            episode_name:        try!(maybe_get_text(root, "EpisodeName")),
             first_aired:         get_text(root, "FirstAired").and_then(|x| dateify(&x).ok()),
             season_number:       try!(get_text(root, "SeasonNumber").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"SeasonNumber missing".to_owned()})),
             season_dvd:          get_text(root, "DVD_season").and_then(|x| intify(&x).ok()),
@@ -420,7 +424,7 @@ impl Tvdb{
             episode_combined:    get_text(root, "Combined_episodenumber").and_then(|x| floatify(&x).ok()),
             episode_dvd:         get_text(root, "DVD_episodenumber").and_then(|x| floatify(&x).ok()),
             imdb_id:             get_text(root, "IMDB_ID"),
-            language:            try!(get_text(root, "Language").ok_or_else(|| TvdbError::DataError{reason:"language missing".to_owned()})),
+            language:            try!(maybe_get_text(root, "Language")),
             overview:            get_text(root, "Overview"),
             production_code:     get_text(root, "ProductionCode"),
             rating:              get_text(root, "Rating").and_then(|x| floatify(&x).ok()),
