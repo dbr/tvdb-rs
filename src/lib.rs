@@ -4,7 +4,6 @@ extern crate log;
 extern crate xmltree;
 extern crate hyper;
 extern crate url;
-extern crate regex;
 
 use std::fmt;
 use std::io::{Read,Write};
@@ -306,10 +305,14 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     }
 
     // Read the Response.
-    res.read_to_end(&mut body).expect("Failed to read response");
+    try!(res.read_to_end(&mut body)
+        .map_err(|e| TvdbError::CommunicationError{
+            reason: format!("Failed to read response: {}", e)}));
 
     // Parse XML
-    let bs = String::from_utf8(body).unwrap();
+    let bs = try!(String::from_utf8(body)
+        .map_err(|e| TvdbError::DataError{reason:
+            format!("Error UTF-8 decoding response from url {} - {}", urlstr, e)}));
     let tree = xmltree::Element::parse(bs.as_bytes());
 
     return tree.map_err(|e|
@@ -440,12 +443,16 @@ impl Tvdb{
                                     season=season,
                                     episode=episode,
                                     );
-        let url = hyper::Url::parse(&formatted_url).ok().expect("invalid URL");
-        debug!("Getting {}", url);
+        let url = try!(hyper::Url::parse(&formatted_url)
+            .map_err(|e| TvdbError::InternalError{reason:
+                format!("Constructed invalid episode info URL {} - {}", formatted_url, e)}));
+        debug!("Getting {}", formatted_url);
 
         // Perform request
         let tree = try!(get_xmltree_from_url(url));
-        let root = tree.children.first().expect("No children");
+        let root = try!(tree.children.first()
+            .ok_or(TvdbError::DataError{reason:
+                format!("XML from {} had no child elements", formatted_url)}));
 
         // Convert XML into struct
         Ok(EpisodeInfo{
