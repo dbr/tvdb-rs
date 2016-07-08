@@ -282,49 +282,31 @@ pub struct EpisodeInfo{
 
 
 fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
-    let enable_cache = false;
-
     // Check if URL is in cache
     let urlstr = url.clone().into_string();
-    let re = regex::Regex::new("[^a-zA-Z0-9_-]+").unwrap();
-    let cachefile = format!("cache/cache__{}", re.replace_all(&urlstr, "_"));
 
     let mut body = Vec::new();
 
-    if enable_cache && std::path::Path::new(&cachefile).exists() {
-        debug!("Reading from cached path");
-        let f = std::fs::File::open(&cachefile).ok().expect("failed to open cache file");
-        let mut reader = std::io::BufReader::new(f);
-        reader.read_to_end(&mut body).unwrap();
-    } else {
-        debug!("Fetching URL {}", url);
-        let client = hyper::Client::new();
-        let res = client.get(url.clone())
-            .header(hyper::header::Connection::close())
-            .send();
+    debug!("Fetching URL {}", urlstr);
+    let client = hyper::Client::new();
+    let res = client.get(url)
+        .header(hyper::header::Connection::close())
+        .send();
 
-        let mut res = match res {
-            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error accessing {} - {}", url, e)}),
-            Ok(r) => r
-        };
+    let mut res = match res {
+        Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error accessing {} - {}", urlstr, e)}),
+        Ok(r) => r
+    };
 
-        // Ensure status code is good
-        if !res.status.is_success() {
-            return Err(
-                TvdbError::CommunicationError{
-                    reason: format!("HTTP error accessing {} - {}", url, res.status)});
-        }
-
-        // Read the Response.
-        res.read_to_end(&mut body).expect("Failed to read response");
+    // Ensure status code is good
+    if !res.status.is_success() {
+        return Err(
+            TvdbError::CommunicationError{
+                reason: format!("HTTP error accessing {} - {}", urlstr, res.status)});
     }
 
-    if enable_cache {
-        debug!("Saving XML to {}", cachefile);
-        std::fs::create_dir_all("cache").expect("Failed to create cache dir");
-        let mut f = std::fs::File::create(cachefile).ok().expect("Failed to create file");
-        f.write_all(&mut body).ok().unwrap();
-    }
+    // Read the Response.
+    res.read_to_end(&mut body).expect("Failed to read response");
 
     // Parse XML
     let bs = String::from_utf8(body).unwrap();
