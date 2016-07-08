@@ -3,21 +3,22 @@ extern crate argparse;
 extern crate rand;
 extern crate env_logger;
 
-use argparse::{ArgumentParser, StoreTrue, Store};
+use argparse::{ArgumentParser, Store};
 use rand::{Rng, SeedableRng, StdRng};
 
 
 fn main(){
     env_logger::init().unwrap();
 
-    //let mut series_name = "".to_owned();
-    //let mut season_no = 1;
-    //let mut episode_no = 1;
+    let mut num: u32 = 1;
+    let mut season_no = 1;
+    let mut episode_no = 1;
 
     {
         let mut ap = ArgumentParser::new();
-        //ap.refer(&mut series_name).add_argument("series", Store, "Series name");
-        //ap.refer(&mut season_no).add_argument("season", Store, "Season number");
+        ap.refer(&mut num).add_option(&["-n", "--number"], Store, "Number of random series to parse");
+        ap.refer(&mut season_no).add_option(&["-s", "--season"], Store, "Season number");
+        ap.refer(&mut episode_no).add_option(&["-e", "--episode"], Store, "Episode number");
         ap.parse_args_or_exit();
     }
 
@@ -27,11 +28,11 @@ fn main(){
     // Opening a bunch of ~random series to check for panicing
     let seed: &[_] = &[1, 2, 3, 4];
     let mut rng: StdRng = SeedableRng::from_seed(seed);
-    for _ in 1..100{
+    for _ in 0..num{
         let rid = rng.gen_range::<u32>(70000, 80000);
         println!("Getting series {}", rid);
 
-        let ep = api.episode(tvdb::EpisodeId::new(rid, "en"), 1, 2);
+        let ep = api.episode(tvdb::EpisodeId::new(rid, "en"), season_no, episode_no);
         match ep{
             Ok(ep) => println!("Okay  ID {}: {}", rid, ep.episode_name),
             Err(e) => println!("Error ID {}: {:?}", rid, e),

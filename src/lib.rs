@@ -285,7 +285,6 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     debug!("Fetching URL {}", urlstr);
 
     // Make request
-    let mut body = Vec::new();
     let client = hyper::Client::new();
     let res = client.get(url)
         .header(hyper::header::Connection::close())
@@ -304,6 +303,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
     }
 
     // Read the Response body
+    let mut body = Vec::new();
     try!(res.read_to_end(&mut body)
         .map_err(|e| TvdbError::CommunicationError{
             reason: format!("Failed to read response: {}", e)}));
