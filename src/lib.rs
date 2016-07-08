@@ -6,6 +6,7 @@ extern crate hyper;
 extern crate url;
 extern crate regex;
 
+use std::fmt;
 use std::io::{Read,Write};
 
 /// Turns "123" into 123
@@ -77,8 +78,21 @@ pub enum TvdbError {
     Cancelled,
 }
 
+/// Shortcut
 pub type TvdbResult<T> = Result<T, TvdbError>;
 
+/// Formatting for error
+impl fmt::Display for TvdbError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            TvdbError::InternalError{reason: ref e} => write!(f, "Internal error: {}", e),
+            TvdbError::SeriesNotFound => write!(f, "Series not found"),
+            TvdbError::CommunicationError{reason: ref e} => write!(f, "Communication error: {}", e),
+            TvdbError::DataError{reason: ref e} => write!(f, "Data error: {}", e),
+            TvdbError::Cancelled => write!(f, "Cancelled"),
+        }
+    }
+}
 
 /// Convert from parse error (e.g for dateify() function)
 impl From<std::num::ParseIntError> for TvdbError{
@@ -326,9 +340,52 @@ pub struct Tvdb{
     pub key: String,
 }
 
-fn get_text(child: &xmltree::Element, x: &str) -> Option<String>{
+/// Get text from element, or return None
+fn get_text_optional(child: &xmltree::Element, x: &str) -> Option<String>{
     child.get_child(x).and_then(|id_child| id_child.text.clone())
 }
+
+/// Get text from element, or error
+fn get_text_req(root: &xmltree::Element, name: &str) -> TvdbResult<String>{
+    get_text_optional(root, name)
+        .ok_or_else(|| TvdbError::DataError{reason:format!("Element {} missing", name)})
+}
+
+/// Get an integer from element, or return None
+fn get_int_optional(root: &xmltree::Element, name: &str) -> TvdbResult<Option<u32>>{
+    match get_text_optional(root, name) {
+        Some(x) => Ok(intify(&x).ok()),
+        None => Ok(None),
+    }
+}
+
+/// Get an integer from element, or return error
+fn get_int_req(root: &xmltree::Element, name: &str) -> TvdbResult<u32>{
+    match get_text_optional(root, name) {
+        Some(x) =>
+            intify(&x).map_err(|e|
+                TvdbError::DataError{reason: format!("Error parsing {}: {}", name, e)}),
+        None =>
+            Err(TvdbError::DataError{reason:format!("Element {} missing", name)})
+    }
+}
+
+/// Get an Date from element, or return None
+fn get_date_optional(root: &xmltree::Element, name: &str) -> TvdbResult<Option<Date>>{
+    match get_text_optional(root, name) {
+        Some(x) => Ok(dateify(&x).ok()),
+        None => Ok(None),
+    }
+}
+
+/// Get an float from element, or return None
+fn get_float_optional(root: &xmltree::Element, name: &str) -> TvdbResult<Option<f32>>{
+    match get_text_optional(root, name) {
+        Some(x) => Ok(floatify(&x).ok()),
+        None => Ok(None),
+    }
+}
+
 
 impl Tvdb{
     /// Initalise API with the given API key. A key can be aquired via
@@ -370,15 +427,15 @@ impl Tvdb{
         for child in tree.children.iter(){
 
             let r = SeriesSearchResult{
-                seriesid:    intify(&get_text(child, "seriesid").expect("Search result XML missing 'seriesid' element")).ok().unwrap(),
-                seriesname:  get_text(child, "SeriesName").expect("Search result XML Missing 'SeriesName' element"),
-                language:    get_text(child, "language").expect("Search result XML missing 'language' element"),
-                overview:    get_text(child, "Overview"),
-                banner:      get_text(child, "banner"),
-                imdb_id:     get_text(child, "IMDB_ID"),
-                first_aired: get_text(child, "FirstAired").and_then(|x| dateify(&x).ok()),
-                network:     get_text(child, "Network"),
-                zap2it_id:   get_text(child, "zap2it_id"),
+                seriesid:    try!(get_int_req(child, "seriesid")),
+                seriesname:  try!(get_text_req(child, "SeriesName")),
+                language:    try!(get_text_req(child, "language")),
+                overview:    get_text_optional(child, "Overview"),
+                banner:      get_text_optional(child, "banner"),
+                imdb_id:     get_text_optional(child, "IMDB_ID"),
+                first_aired: try!(get_date_optional(child, "FirstAired")),
+                network:     get_text_optional(child, "Network"),
+                zap2it_id:   get_text_optional(child, "zap2it_id"),
             };
 
             results.push(r);
@@ -408,42 +465,38 @@ impl Tvdb{
         let tree = try!(get_xmltree_from_url(url));
         let root = tree.children.first().expect("No children");
 
-        fn maybe_get_text(root: &xmltree::Element, name: &str) -> TvdbResult<String>{
-            get_text(root, name).ok_or_else(|| TvdbError::DataError{reason:format!("Element {} missing", name)})
-        }
-
         // Convert XML into struct
         Ok(EpisodeInfo{
-            id:                  try!(get_text(root, "id").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"id missing".to_owned()})),
-            episode_name:        try!(maybe_get_text(root, "EpisodeName")),
-            first_aired:         get_text(root, "FirstAired").and_then(|x| dateify(&x).ok()),
-            season_number:       try!(get_text(root, "SeasonNumber").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"SeasonNumber missing".to_owned()})),
-            season_dvd:          get_text(root, "DVD_season").and_then(|x| intify(&x).ok()),
-            season_combined:     get_text(root, "Combined_season").and_then(|x| floatify(&x).ok()),
-            episode_number:      try!(get_text(root, "EpisodeNumber").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"EpisodeNumber missing".to_owned()})),
-            episode_combined:    get_text(root, "Combined_episodenumber").and_then(|x| floatify(&x).ok()),
-            episode_dvd:         get_text(root, "DVD_episodenumber").and_then(|x| floatify(&x).ok()),
-            imdb_id:             get_text(root, "IMDB_ID"),
-            language:            try!(maybe_get_text(root, "Language")),
-            overview:            get_text(root, "Overview"),
-            production_code:     get_text(root, "ProductionCode"),
-            rating:              get_text(root, "Rating").and_then(|x| floatify(&x).ok()),
-            rating_count:        get_text(root, "RatingCount").and_then(|x| intify(&x).ok()),
-            guest_stars:         get_text(root, "GuestStars"),
-            director:            get_text(root, "Director"),
-            writer:              get_text(root, "Writer"),
-            episode_absolute:    get_text(root, "absolute_number").and_then(|x| intify(&x).ok()),
-            airs_after_season:   get_text(root, "airsafter_season").and_then(|x| intify(&x).ok()),
-            airs_before_episode: get_text(root, "airsbefore_episode").and_then(|x| intify(&x).ok()),
-            airs_before_season:  get_text(root, "airsbefore_season").and_then(|x| intify(&x).ok()),
-            season_id:           try!(get_text(root, "seasonid").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"seasonid missing".to_owned()})),
-            series_id:           try!(get_text(root, "seriesid").and_then(|x| intify(&x).ok()).ok_or_else(|| TvdbError::DataError{reason:"seriesid missing".to_owned()})),
-            thumbnail:           get_text(root, "filename"),
-            thumbnail_flag:      get_text(root, "EpImgFlag").and_then(|x| intify(&x).ok()),
-            thumbnail_added:     get_text(root, "thumb_added").and_then(|x| dateify(&x).ok()),
-            thumbnail_width:     get_text(root, "thumb_width").and_then(|x| intify(&x).ok()),
-            thumbnail_height:    get_text(root, "thumb_width").and_then(|x| intify(&x).ok()),
-            last_updated:        get_text(root, "lastupdated").and_then(|x| intify(&x).ok()),
+            id:                  try!(get_int_req(root, "id")),
+            episode_name:        try!(get_text_req(root, "EpisodeName")),
+            first_aired:         try!(get_date_optional(root, "FirstAired")),
+            season_number:       try!(get_int_req(root, "SeasonNumber")),
+            season_dvd:          try!(get_int_optional(root, "DVD_season")),
+            season_combined:     try!(get_float_optional(root, "Combined_season")),
+            episode_number:      try!(get_int_req(root, "EpisodeNumber")),
+            episode_combined:    try!(get_float_optional(root, "Combined_episodenumber")),
+            episode_dvd:         try!(get_float_optional(root, "DVD_episodenumber")),
+            imdb_id:             get_text_optional(root, "IMDB_ID"),
+            language:            try!(get_text_req(root, "Language")),
+            overview:            get_text_optional(root, "Overview"),
+            production_code:     get_text_optional(root, "ProductionCode"),
+            rating:              try!(get_float_optional(root, "Rating")),
+            rating_count:        try!(get_int_optional(root, "RatingCount")),
+            guest_stars:         get_text_optional(root, "GuestStars"),
+            director:            get_text_optional(root, "Director"),
+            writer:              get_text_optional(root, "Writer"),
+            episode_absolute:    try!(get_int_optional(root, "absolute_number")),
+            airs_after_season:   try!(get_int_optional(root, "airsafter_season")),
+            airs_before_episode: try!(get_int_optional(root, "airsbefore_episode")),
+            airs_before_season:  try!(get_int_optional(root, "airsbefore_season")),
+            season_id:           try!(get_int_req(root, "seasonid")),
+            series_id:           try!(get_int_req(root, "seriesid")),
+            thumbnail:           get_text_optional(root, "filename"),
+            thumbnail_flag:      try!(get_int_optional(root, "EpImgFlag")),
+            thumbnail_added:     try!(get_date_optional(root, "thumb_added")),
+            thumbnail_width:     try!(get_int_optional(root, "thumb_width")),
+            thumbnail_height:    try!(get_int_optional(root, "thumb_width")),
+            last_updated:        try!(get_int_optional(root, "lastupdated")),
 
         })
     }
@@ -454,16 +507,18 @@ impl Tvdb{
     /// ```
     /// # let MY_API_KEY = "0629B785CE550C8D";
     /// let api = tvdb::Tvdb::new(MY_API_KEY);
-    /// // Perform search for series
-    /// let sr = api.search("scrubs", "en").unwrap();
-    /// // Get the first SeriesSearchResult:
-    /// let ref first_result = sr[0];
-    /// // Then lookup the 23rd episode of the first result:
-    /// let ep = api.episode(first_result, 1, 23).ok().unwrap();
-    /// println!("{}", ep.episode_name);
-    /// // Alternatively, lookup the 23rd episode for the given series ID:
-    /// let ep_by_id = api.episode(76156, 1, 23).ok().unwrap();
+    ///
+    /// // Lookup the 23rd episode for the given series ID:
+    /// let ep_by_id = api.episode(76156, 1, 23).unwrap();
     /// println!("{}", ep_by_id.episode_name);
+    ///
+    /// // More commonly, perform search for series
+    /// let sr = api.search("scrubs", "en").unwrap();
+    /// let ref first_result = sr[0];
+    ///
+    /// // ..then lookup the 23rd episode of the first result:
+    /// let ep = api.episode(first_result, 1, 23).unwrap();
+    /// println!("{}", ep.episode_name);
     /// ```
     pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> TvdbResult<EpisodeInfo>{
         self.episode_inner(epid.into(), season, episode)
