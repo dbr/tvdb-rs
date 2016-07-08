@@ -281,12 +281,11 @@ pub struct EpisodeInfo{
 
 
 fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
-    // Check if URL is in cache
     let urlstr = url.clone().into_string();
-
-    let mut body = Vec::new();
-
     debug!("Fetching URL {}", urlstr);
+
+    // Make request
+    let mut body = Vec::new();
     let client = hyper::Client::new();
     let res = client.get(url)
         .header(hyper::header::Connection::close())
@@ -304,7 +303,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
                 reason: format!("HTTP error accessing {} - {}", urlstr, res.status)});
     }
 
-    // Read the Response.
+    // Read the Response body
     try!(res.read_to_end(&mut body)
         .map_err(|e| TvdbError::CommunicationError{
             reason: format!("Failed to read response: {}", e)}));
@@ -401,7 +400,7 @@ impl Tvdb{
         let url = try!(
             hyper::Url::parse(&formatted_url)
             .map_err(|x| TvdbError::InternalError{
-                reason: format!("Invalid URL {}: {}", formatted_url, x)}));
+                reason: format!("Invalid URL {} - {}", formatted_url, x)}));
         debug!("Getting {}", url);
 
         let tree = try!(get_xmltree_from_url(url));
