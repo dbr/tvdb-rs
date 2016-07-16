@@ -4,11 +4,17 @@
 
 [TheTVDB.com][tvdb] interface for the Rust programming langauge
 
+[tvdb]: http://thetvdb.com/
+
+
 ## Status
 
-Work in progress
-
-[tvdb]: http://thetvdb.com/
+- [x] Episode data lookup.
+- [ ] Lookup by different air orders (dvd, absolute)
+- [ ] Access extended actors data
+- [ ] Access banners data
+- [ ] Access full series record (`all.zip`)
+- [ ] User-specific methods (favorites, rating etc)
 
 
 ## Release procedure
