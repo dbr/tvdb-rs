@@ -21,6 +21,9 @@ env_logger = "0.3"
 rand = "0.3"
 
 [[example]]
+name = "tvdb-basic"
+
+[[example]]
 name = "tvdb-lookup"
 
 [[example]]
