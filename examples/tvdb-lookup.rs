@@ -1,7 +1,7 @@
 extern crate tvdb;
 extern crate argparse;
 
-use argparse::{ArgumentParser, StoreTrue, Store};
+use argparse::{ArgumentParser, Store};
 
 
 fn main(){
