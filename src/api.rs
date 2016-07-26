@@ -2,7 +2,7 @@ use url;
 use hyper;
 use xmltree;
 
-use std::io::{Read};
+use std::io::Read;
 
 use data::{Date, EpisodeId, SeriesSearchResult, EpisodeInfo};
 use error::{TvdbError, TvdbResult};
@@ -50,6 +50,7 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
 /// Main interface
 #[derive(Debug,Clone)]
 pub struct Tvdb{
+    /// Your API key from TheTVDB.com
     pub key: String,
 }
 

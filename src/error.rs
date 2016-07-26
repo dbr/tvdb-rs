@@ -4,10 +4,19 @@ use std::num::ParseIntError;
 /// Errors in contacting TheTVDB
 #[derive(Debug)]
 pub enum TvdbError {
+    /// An internal error within this library
     InternalError{reason: String},
+
+    /// When looking up a nonexistent series
     SeriesNotFound,
+
+    /// Error contacting TheTVDB.com (e.g HTTP error)
     CommunicationError{reason: String},
+
+    /// Malformed data in response from TheTVDB.com
     DataError{reason: String},
+
+    /// User cancelled in some interactive fashion
     Cancelled,
 }
 
