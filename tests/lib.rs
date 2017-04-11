@@ -1,7 +1,7 @@
 extern crate tvdb;
 extern crate rand;
 
-use tvdb::{Tvdb, EpisodeId};
+use tvdb::{Tvdb, EpisodeId, TvdbResult, TvdbError};
 
 const APIKEY: &'static str = "0629B785CE550C8D";
 
@@ -61,4 +61,31 @@ fn random_series(){
             Err(e) => println!("{:?}", e),
         }
     }
+}
+
+#[derive(Debug,Clone)]
+struct CustomTestClient;
+
+impl DummyRequestClient{
+    pub fn new() -> CustomTestClient{
+        return CustomTestClient{};
+    }
+}
+use tvdb::RequestClient;
+impl RequestClient for DummyRequestClient{
+    fn get_url(&self, url: &str) -> TvdbResult<String>{
+        return Err(TvdbError::CommunicationError{reason: "Fake error!".into()});
+    }
+}
+
+#[test]
+fn custom_http_client() {
+    let c = DummyRequestClient::new();
+
+    let mut api = Tvdb::new(APIKEY);
+    api.set_http_client(&c);
+
+    let result = api.search("scrubs", "en");
+    println!("{:?}", result);
+    assert!(result.is_err());
 }

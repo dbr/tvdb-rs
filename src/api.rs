@@ -2,6 +2,7 @@ use url;
 use hyper;
 use xmltree;
 
+use std::fmt::Debug;
 use std::io::Read;
 
 use data::{Date, EpisodeId, SeriesSearchResult, EpisodeInfo};
@@ -9,39 +10,56 @@ use error::{TvdbError, TvdbResult};
 use parse::{intify, floatify, dateify};
 
 
-fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
-    let urlstr = url.clone().into_string();
-    debug!("Fetching URL {}", urlstr);
+/// Trait for custom implementations of URL fetching
+pub trait RequestClient: Debug {
+    fn get_url(&self, url: &str) -> TvdbResult<String>;
+}
 
-    // Make request
-    let client = hyper::Client::new();
-    let res = client.get(url)
-        .header(hyper::header::Connection::close())
-        .send();
+/// Default implementation of RequestClient
+#[derive(Debug)]
+struct DefaultHttpClient;
 
-    let mut res = match res {
-        Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error accessing {} - {}", urlstr, e)}),
-        Ok(r) => r
-    };
+impl RequestClient for DefaultHttpClient{
+    fn get_url(&self, url: &str) -> TvdbResult<String>{
+        let parsed_url = try!(
+            hyper::Url::parse(url)
+            .map_err(|x| TvdbError::InternalError{
+                reason: format!("Invalid URL {} - {}", url, x)}));
 
-    // Ensure status code is good
-    if !res.status.is_success() {
-        return Err(
-            TvdbError::CommunicationError{
-                reason: format!("HTTP error accessing {} - {}", urlstr, res.status)});
+        let client = hyper::Client::new();
+        let res = client.get(parsed_url)
+            .header(hyper::header::Connection::close())
+            .send();
+
+        let mut res = match res {
+            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error accessing {} - {}", url, e)}),
+            Ok(r) => r
+        };
+
+        // Ensure status code is good
+        if !res.status.is_success() {
+            return Err(
+                TvdbError::CommunicationError{
+                    reason: format!("HTTP error accessing {} - {}", url, res.status)});
+        }
+
+        // Read the Response body
+        let mut body = Vec::new();
+        try!(res.read_to_end(&mut body)
+            .map_err(|e| TvdbError::CommunicationError{
+                reason: format!("Failed to read response: {}", e)}));
+
+        let bs = try!(String::from_utf8(body)
+            .map_err(|e| TvdbError::DataError{reason:
+                format!("Error UTF-8 decoding response from url {} - {}", url, e)}));
+
+        return Ok(bs);
     }
+}
 
-    // Read the Response body
-    let mut body = Vec::new();
-    try!(res.read_to_end(&mut body)
-        .map_err(|e| TvdbError::CommunicationError{
-            reason: format!("Failed to read response: {}", e)}));
 
-    // Parse XML
-    let bs = try!(String::from_utf8(body)
-        .map_err(|e| TvdbError::DataError{reason:
-            format!("Error UTF-8 decoding response from url {} - {}", urlstr, e)}));
-    let tree = xmltree::Element::parse(bs.as_bytes());
+fn get_xmltree_from_str(body: String) -> TvdbResult<xmltree::Element>{
+    let tree = xmltree::Element::parse(body.as_bytes());
 
     return tree.map_err(|e|
         TvdbError::DataError{reason: format!("Error parsing XML from TheTVDB.com: {}", e)});
@@ -49,9 +67,10 @@ fn get_xmltree_from_url(url: hyper::Url) -> TvdbResult<xmltree::Element>{
 
 /// Main interface
 #[derive(Debug,Clone)]
-pub struct Tvdb{
+pub struct Tvdb<'a>{
     /// Your API key from TheTVDB.com
     pub key: String,
+    http_client: Option<&'a RequestClient>,
 }
 
 /// Get text from element, or return None
@@ -101,11 +120,20 @@ fn get_float_optional(root: &xmltree::Element, name: &str) -> TvdbResult<Option<
 }
 
 
-impl Tvdb{
+impl <'a>Tvdb <'a>{
     /// Initalise API with the given API key. A key can be aquired via
     /// the [API Key Registration page](http://thetvdb.com/?tab=apiregister)
-    pub fn new<S>(key: S) -> Tvdb where S: Into<String>{
-        Tvdb{key: key.into()}
+    pub fn new<S>(key: S) -> Tvdb <'a> where S: Into<String>{
+        Tvdb{
+            key: key.into(),
+            http_client: None,
+        }
+    }
+
+    /// Sets a custom client (implementation of `RequestClient`) used to
+    /// perform HTTP requests
+    pub fn set_http_client(&mut self, client: &'a RequestClient) {
+        self.http_client = Some::<&'a RequestClient>(client);
     }
 
     /// Searches for a given series name.
@@ -132,14 +160,14 @@ impl Tvdb{
             .append_pair("language", lang)
             .finish();
 
-        let formatted_url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
-        let url = try!(
-            hyper::Url::parse(&formatted_url)
-            .map_err(|x| TvdbError::InternalError{
-                reason: format!("Invalid URL {} - {}", formatted_url, x)}));
+        let url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
         debug!("Getting {}", url);
 
-        let tree = try!(get_xmltree_from_url(url));
+        let default_client = DefaultHttpClient{}; // FIXME: Create one per instance
+        let c = self.http_client.unwrap_or(&default_client);
+        let data = try!(c.get_url(&url));
+
+        let tree = try!(get_xmltree_from_str(data));
 
         // Convert XML into structs
         let mut results : Vec<SeriesSearchResult> = vec![];
@@ -171,23 +199,24 @@ impl Tvdb{
     fn episode_inner(&self, epid: EpisodeId, season: u32, episode: u32) -> TvdbResult<EpisodeInfo>{
         // <mirrorpath>/api/<apikey>/series/{seriesid}/default/{season}/{episode}/{language}.xml
 
-        let formatted_url = format!("http://thetvdb.com/api/{apikey}/series/{seriesid}/default/{season}/{episode}/{language}.xml",
+        let url = format!("http://thetvdb.com/api/{apikey}/series/{seriesid}/default/{season}/{episode}/{language}.xml",
                                     apikey=self.key,
                                     seriesid=epid.seriesid,
                                     language=epid.language,
                                     season=season,
                                     episode=episode,
                                     );
-        let url = try!(hyper::Url::parse(&formatted_url)
-            .map_err(|e| TvdbError::InternalError{reason:
-                format!("Constructed invalid episode info URL {} - {}", formatted_url, e)}));
-        debug!("Getting {}", formatted_url);
+        debug!("Getting {}", url);
 
         // Perform request
-        let tree = try!(get_xmltree_from_url(url));
+        let default_client = DefaultHttpClient{}; // FIXME: Create one per instance
+        let c = self.http_client.unwrap_or(&default_client);
+        let data = try!(c.get_url(&url));
+
+        let tree = try!(get_xmltree_from_str(data));
         let root = try!(tree.children.first()
             .ok_or(TvdbError::DataError{reason:
-                format!("XML from {} had no child elements", formatted_url)}));
+                format!("XML from {} had no child elements", url)}));
 
         // Convert XML into struct
         Ok(EpisodeInfo{

@@ -17,7 +17,7 @@ mod data;
 mod api;
 
 // Main public API
-pub use api::Tvdb;
+pub use api::{Tvdb, RequestClient};
 
 // Expose error types
 pub use error::{TvdbError, TvdbResult};
