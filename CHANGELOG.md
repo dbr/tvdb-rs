@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 Change log format based on
 ["Keep a CHANGELOG"](http://keepachangelog.com/).
 
+## [Unreleased]
+- `Tvdb::set_http_client` allows setting custom HTTP clients which implement `tvdb::RequestClient`
+
 ## [0.4.0] - 2016-07-17
 - Better error handling - library should no longer panic in any reasonable case.
 - Additional code in `examples`
