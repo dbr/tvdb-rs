@@ -64,11 +64,11 @@ fn random_series(){
 }
 
 #[derive(Debug,Clone)]
-struct CustomTestClient;
+struct DummyRequestClient;
 
 impl DummyRequestClient{
-    pub fn new() -> CustomTestClient{
-        return CustomTestClient{};
+    pub fn new() -> DummyRequestClient{
+        return DummyRequestClient{};
     }
 }
 use tvdb::RequestClient;
