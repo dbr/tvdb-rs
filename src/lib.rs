@@ -7,7 +7,7 @@
 extern crate log;
 
 extern crate xmltree;
-extern crate hyper;
+extern crate reqwest;
 extern crate url;
 
 // Module structure

@@ -1,9 +1,9 @@
 use url;
-use hyper;
+use reqwest;
 use xmltree;
 
-use std::fmt::Debug;
 use std::io::Read;
+use std::fmt::Debug;
 
 use data::{Date, EpisodeId, SeriesSearchResult, EpisodeInfo};
 use error::{TvdbError, TvdbResult};
@@ -21,39 +21,22 @@ struct DefaultHttpClient;
 
 impl RequestClient for DefaultHttpClient{
     fn get_url(&self, url: &str) -> TvdbResult<String>{
-        let parsed_url = try!(
-            hyper::Url::parse(url)
-            .map_err(|x| TvdbError::InternalError{
-                reason: format!("Invalid URL {} - {}", url, x)}));
+        // Make request
+        let mut resp = reqwest::get(url)
+            .map_err(|x| TvdbError::CommunicationError{
+                reason: format!("Error creating HTTP request: {}", x)})?;
 
-        let client = hyper::Client::new();
-        let res = client.get(parsed_url)
-            .header(hyper::header::Connection::close())
-            .send();
-
-        let mut res = match res {
-            Err(e) => return Err(TvdbError::CommunicationError{reason: format!("Error accessing {} - {}", url, e)}),
-            Ok(r) => r
-        };
-
-        // Ensure status code is good
-        if !res.status.is_success() {
-            return Err(
-                TvdbError::CommunicationError{
-                    reason: format!("HTTP error accessing {} - {}", url, res.status)});
+        // Check response
+        if !resp.status().is_success() {
+            return Err(TvdbError::CommunicationError{
+                reason: format!("Unsuccessful HTTP response from url {}: {}", url, resp.status())})
         }
 
-        // Read the Response body
-        let mut body = Vec::new();
-        try!(res.read_to_end(&mut body)
-            .map_err(|e| TvdbError::CommunicationError{
-                reason: format!("Failed to read response: {}", e)}));
-
-        let bs = try!(String::from_utf8(body)
-            .map_err(|e| TvdbError::DataError{reason:
-                format!("Error UTF-8 decoding response from url {} - {}", url, e)}));
-
-        return Ok(bs);
+        let mut result = String::new();
+        resp.read_to_string(&mut result)
+            .map_err(|x| TvdbError::CommunicationError{
+                reason: format!("Error reading response: {}", x)})?;
+        return Ok(result);
     }
 }
 
