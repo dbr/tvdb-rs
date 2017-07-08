@@ -87,5 +87,14 @@ fn custom_http_client() {
 
     let result = api.search("scrubs", "en");
     println!("{:?}", result);
-    assert!(result.is_err());
+
+    match result{
+        Ok(_) => panic!("Expected error"),
+        Err(e) => (
+            match e {
+                TvdbError::CommunicationError{reason: _} => (),
+                _ => panic!("Unexpected"),
+            }
+        ),
+    }
 }
