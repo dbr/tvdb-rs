@@ -14,6 +14,9 @@ reqwest = "0.6"
 xmltree = "0.3"
 url = "1.1"
 log = "0.3"
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
 
 [dev-dependencies]
 argparse = "0.2"

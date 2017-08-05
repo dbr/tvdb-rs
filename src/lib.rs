@@ -10,11 +10,17 @@ extern crate xmltree;
 extern crate reqwest;
 extern crate url;
 
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
+
 // Module structure
 mod parse;
 mod error;
 mod data;
 mod api;
+pub mod v2;
 
 // Main public API
 pub use api::{Tvdb, RequestClient};

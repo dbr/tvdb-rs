@@ -2,6 +2,8 @@ use url;
 use reqwest;
 use xmltree;
 
+use reqwest::header::{Headers, Authorization, Bearer};
+
 use std::io::Read;
 use std::fmt::Debug;
 
@@ -12,17 +14,30 @@ use parse::{intify, floatify, dateify};
 
 /// Trait for custom implementations of URL fetching
 pub trait RequestClient: Debug {
-    fn get_url(&self, url: &str) -> TvdbResult<String>;
+    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String>;
 }
 
 /// Default implementation of RequestClient
 #[derive(Debug)]
-struct DefaultHttpClient;
+pub struct DefaultHttpClient;
 
 impl RequestClient for DefaultHttpClient{
-    fn get_url(&self, url: &str) -> TvdbResult<String>{
+    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String>{
         // Make request
-        let mut resp = reqwest::get(url)
+        let client = reqwest::Client::new().unwrap();
+
+        let mut headers = Headers::new();
+        if let Some(tok) = jwt_token{
+            headers.set(
+               Authorization(
+                   Bearer{token: tok.into()}
+               )
+            );
+        }
+
+        let mut resp = client.get(url)
+            .headers(headers)
+            .send()
             .map_err(|x| TvdbError::CommunicationError{
                 reason: format!("Error creating HTTP request: {}", x)})?;
 
@@ -148,7 +163,7 @@ impl <'a>Tvdb <'a>{
 
         let default_client = DefaultHttpClient{}; // FIXME: Create one per instance
         let c = self.http_client.unwrap_or(&default_client);
-        let data = try!(c.get_url(&url));
+        let data = try!(c.get_url(&url, None));
 
         let tree = try!(get_xmltree_from_str(data));
 
@@ -194,7 +209,7 @@ impl <'a>Tvdb <'a>{
         // Perform request
         let default_client = DefaultHttpClient{}; // FIXME: Create one per instance
         let c = self.http_client.unwrap_or(&default_client);
-        let data = try!(c.get_url(&url));
+        let data = try!(c.get_url(&url, None));
 
         let tree = try!(get_xmltree_from_str(data));
         let root = try!(tree.children.first()

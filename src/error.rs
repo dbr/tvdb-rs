@@ -1,5 +1,6 @@
 use std::fmt;
 use std::num::ParseIntError;
+use serde_json;
 
 /// Errors in contacting TheTVDB
 #[derive(Debug)]
@@ -40,5 +41,11 @@ impl fmt::Display for TvdbError {
 impl From<ParseIntError> for TvdbError{
     fn from(err: ParseIntError) -> TvdbError{
         TvdbError::DataError{reason: format!("{}", err)} // FIXME
+    }
+}
+
+impl From<serde_json::Error> for TvdbError {
+    fn from(err: serde_json::Error) -> TvdbError{
+        TvdbError::DataError{reason: format!("Error parsing JSON data: {}", err)}
     }
 }

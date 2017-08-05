@@ -1,6 +1,9 @@
 extern crate tvdb;
 extern crate rand;
 
+mod v2;
+
+
 use tvdb::{Tvdb, EpisodeId, TvdbResult, TvdbError};
 
 const APIKEY: &'static str = "0629B785CE550C8D";
@@ -73,7 +76,7 @@ impl DummyRequestClient{
 }
 use tvdb::RequestClient;
 impl RequestClient for DummyRequestClient{
-    fn get_url(&self, url: &str) -> TvdbResult<String>{
+    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String>{
         return Err(TvdbError::CommunicationError{reason: "Fake error!".into()});
     }
 }
