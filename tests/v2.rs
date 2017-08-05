@@ -5,6 +5,8 @@ use tvdb::v2::Tvdb;
 fn basic() {
     let t = Tvdb::new("0629B785CE550C8D");
     t.login().unwrap();
-    println!("{:?}", t.search("scrubs"));
-    panic!();
+    let sr = t.search("scrubs").expect();
+    for s in sr.data.iter() {
+        println!("{}: ID {}", s.seriesName, s.id);
+    }
 }
