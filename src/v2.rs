@@ -32,20 +32,20 @@ struct LoginResponse {
 /// List of `SeriesSearchData`, returned from a search
 #[derive(Deserialize, Debug)]
 pub struct SeriesSearchResult {
-    data: Vec<SeriesSearchData>,
+    pub data: Vec<SeriesSearchData>,
 }
 
 /// Info for a single series, as returned from search query
 #[derive(Deserialize, Debug)]
 pub struct SeriesSearchData {
-    aliases: Option<Vec<String>>,
-    banner: Option<String>,
-    firstAired: Option<String>,
-    id: Option<i64>,
-    network: Option<String>,
-    overview: Option<String>,
-    seriesName: Option<String>,
-    status: Option<String>,
+    pub aliases: Option<Vec<String>>,
+    pub banner: Option<String>,
+    pub firstAired: Option<String>,
+    pub id: Option<i64>,
+    pub network: Option<String>,
+    pub overview: Option<String>,
+    pub seriesName: Option<String>,
+    pub status: Option<String>,
 }
 
 
