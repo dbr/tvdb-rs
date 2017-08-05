@@ -1,6 +1,7 @@
 use std::io::Read;
 use std::collections::HashMap;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 use url;
 use reqwest;
