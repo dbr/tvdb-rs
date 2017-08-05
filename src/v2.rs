@@ -17,6 +17,8 @@ pub struct Tvdb<'a> {
     pub key: String,
     http_client: Option<&'a RequestClient>,
     jwt_token: RefCell<Option<String>>,
+    default_client: Rc<RequestClient>,
+
 }
 
 
@@ -56,6 +58,7 @@ impl<'a> Tvdb<'a> {
             key: key.into(),
             http_client: None,
             jwt_token: RefCell::new(None),
+            default_client: Rc::new(DefaultHttpClient {}),
         }
     }
 
@@ -65,7 +68,7 @@ impl<'a> Tvdb<'a> {
         *j = Some(token);
     }
     fn get_token(&self) -> Option<String> {
-        let j = self.jwt_token.borrow_mut();
+        let j = self.jwt_token.borrow();
         match *j {
             None => None,
             Some(ref t) => Some(format!("{}", *t)),
@@ -114,8 +117,8 @@ impl<'a> Tvdb<'a> {
             .as_str()
             .into();
 
-        let default_client = DefaultHttpClient {}; // FIXME: Create one per instance
-        let c = self.http_client.unwrap_or(&default_client);
+        let dc = self.default_client.as_ref();
+        let c = self.http_client.unwrap_or(dc);
         // Query URL
         let data = c.get_url(&url, self.get_token())?;
         // Parse result
