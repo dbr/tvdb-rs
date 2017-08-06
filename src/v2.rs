@@ -107,10 +107,14 @@ impl<'a> Tvdb<'a> {
         self.http_client = Some::<&'a RequestClient>(client);
     }
 
-    pub fn search(&self, name: &str) -> TvdbResult<SeriesSearchResult> {
-        let mut map = HashMap::new();
-        map.insert("name", name);
-        //map.insert("imdbId", "json");
+    pub fn search(&self, name: Option<&str>, imdb_id: Option<&str>) -> TvdbResult<SeriesSearchResult> {
+        let mut map: HashMap<&str, &str> = HashMap::new();
+        if let Some(n) = name {
+            map.insert("name", n);
+        }
+        if let Some(i) = imdb_id {
+            map.insert("imdbId", i);
+        }
 
         let search_url = "https://api.thetvdb.com/search/series";
         let url: String = url::Url::parse_with_params(search_url, map)
@@ -127,14 +131,4 @@ impl<'a> Tvdb<'a> {
 
         Ok(result)
     }
-
-    /*
-    pub fn search_imdb(&self, imdb_id: &str){
-        panic!();
-    }
-
-    pub fn search_zap2it(&self, zap2it_id: &str){
-        panic!();
-    }
-*/
 }
