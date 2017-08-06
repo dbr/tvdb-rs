@@ -107,28 +107,41 @@ impl<'a> Tvdb<'a> {
         self.http_client = Some::<&'a RequestClient>(client);
     }
 
-    pub fn search(&self, name: Option<&str>, imdb_id: Option<&str>) -> TvdbResult<SeriesSearchResult> {
+    pub fn search(&self, name: &str) -> TvdbResult<SeriesSearchResult> {
         let mut map: HashMap<&str, &str> = HashMap::new();
-        if let Some(n) = name {
-            map.insert("name", n);
-        }
-        if let Some(i) = imdb_id {
-            map.insert("imdbId", i);
-        }
+        map.insert("name", name);
 
-        let search_url = "https://api.thetvdb.com/search/series";
-        let url: String = url::Url::parse_with_params(search_url, map)
-            .unwrap()
-            .as_str()
-            .into();
+        let data = self.get_search_data(&map)?;
 
-        let dc = self.default_client.as_ref();
-        let c = self.http_client.unwrap_or(dc);
-        // Query URL
-        let data = c.get_url(&url, self.get_token())?;
         // Parse result
         let result: SeriesSearchResult = serde_json::from_str(&data).unwrap();
 
         Ok(result)
+    }
+
+    pub fn search_imdb(&self, imdb_id: &str) -> TvdbResult<SeriesSearchResult> {
+        let mut params: HashMap<&str, &str> = HashMap::new();
+        params.insert("imdbId", imdb_id);
+
+        let data = self.get_search_data(&params)?;
+
+        // Parse result
+        let result: SeriesSearchResult = serde_json::from_str(&data).unwrap();
+
+        Ok(result)
+    }
+
+    fn get_search_data(&self, params: &HashMap<&str, &str>) -> TvdbResult<String> {
+        let search_url = "https://api.thetvdb.com/search/series";
+        let url: String = url::Url::parse_with_params(search_url, params)
+            .unwrap()
+            .as_str()
+            .into();
+        let dc = self.default_client.as_ref();
+        let c = self.http_client.unwrap_or(dc);
+        // Query URL
+        let data = c.get_url(&url, self.get_token())?;
+
+        return Ok(data);
     }
 }
