@@ -50,7 +50,7 @@ pub struct SeriesSearchData {
 
 
 impl<'a> Tvdb<'a> {
-    /// Initalise API with the given API key. A key can be aquired via
+    /// Initalise API with the given API key. A key can be acquired via
     /// the [API Key Registration page](http://thetvdb.com/?tab=apiregister)
     pub fn new<S>(key: S) -> Tvdb<'a>
         where S: Into<String>,
