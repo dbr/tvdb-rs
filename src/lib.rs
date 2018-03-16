@@ -19,8 +19,7 @@ extern crate serde_json;
 mod parse;
 mod error;
 mod data;
-mod api;
-pub mod v2;
+pub mod api;
 
 // Main public API
 pub use api::{Tvdb, RequestClient};
@@ -29,9 +28,4 @@ pub use api::{Tvdb, RequestClient};
 pub use error::{TvdbError, TvdbResult};
 
 // Expose data types
-pub use data::{
-    Date,
-    EpisodeId,
-    SeriesSearchResult,
-    EpisodeInfo,
-};
+pub use data::{Date, EpisodeId, SeriesSearchResult, EpisodeInfo};

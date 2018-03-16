@@ -1,9 +1,6 @@
 extern crate tvdb;
 extern crate rand;
 
-mod v2;
-
-
 use tvdb::{Tvdb, EpisodeId, TvdbResult, TvdbError};
 
 const APIKEY: &'static str = "0629B785CE550C8D";
@@ -11,14 +8,14 @@ const APIKEY: &'static str = "0629B785CE550C8D";
 #[test]
 fn search() {
     let api = Tvdb::new(APIKEY.to_owned());
-    let sr = api.search("scrubs", "en");
-    assert!(sr.ok().unwrap()[0].seriesname == "Scrubs");
+    let sr = api.search("scrubs");
+    assert!(sr.ok().unwrap().data[0].series_name == "Scrubs");
 }
 
 #[test]
 fn nonexist() {
     let api = Tvdb::new(APIKEY);
-    let sr = api.search("ladlkgdklfgsdfglk", "en");
+    let sr = api.search("ladlkgdklfgsdfglk");
     assert!(sr.is_err());
 }
 
@@ -40,7 +37,7 @@ fn lookup_by_u32(){
 #[test]
 fn epinfo_default(){
     let api = Tvdb::new(APIKEY);
-    let sr = api.search("scrubs", "en").ok().unwrap();
+    let sr = api.search("scrubs").ok().unwrap();
     let ep = api.episode(&sr[0], 1, 2).ok().unwrap();
     assert!(ep.episode_name == "My Mentor");
 }
@@ -88,7 +85,7 @@ fn custom_http_client() {
     let mut api = Tvdb::new(APIKEY);
     api.set_http_client(&c);
 
-    let result = api.search("scrubs", "en");
+    let result = api.search("scrubs");
     println!("{:?}", result);
 
     match result{

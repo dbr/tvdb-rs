@@ -1,104 +1,79 @@
-use std::io::Read;
-use std::collections::HashMap;
-use std::cell::RefCell;
-use std::rc::Rc;
+/*
 
 use url;
 use reqwest;
-use serde_json;
 
-use super::error::{TvdbError, TvdbResult};
-use super::api::RequestClient;
-use super::api::DefaultHttpClient;
+use reqwest::header::{Headers, Authorization, Bearer};
+
+use std::io::Read;
+use std::fmt::Debug;
+
+use data::{Date, EpisodeId, SeriesSearchResult, EpisodeInfo};
+use error::{TvdbError, TvdbResult};
+use parse::{intify, floatify, dateify};
+
+
+/// Trait for custom implementations of URL fetching
+pub trait RequestClient: Debug {
+    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String>;
+}
+
+/// Default implementation of RequestClient
+#[derive(Debug)]
+pub struct DefaultHttpClient;
+
+impl RequestClient for DefaultHttpClient{
+    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String>{
+        // Make request
+        let client = reqwest::Client::new().unwrap();
+
+        let mut headers = Headers::new();
+        if let Some(tok) = jwt_token{
+            headers.set(
+               Authorization(
+                   Bearer{token: tok.into()}
+               )
+            );
+        }
+
+        let mut resp = client.get(url)
+            .headers(headers)
+            .send()
+            .map_err(|x| TvdbError::CommunicationError{
+                reason: format!("Error creating HTTP request: {}", x)})?;
+
+        // Check response
+        if !resp.status().is_success() {
+            return Err(TvdbError::CommunicationError{
+                reason: format!("Unsuccessful HTTP response from url {}: {}", url, resp.status())})
+        }
+
+        let mut result = String::new();
+        resp.read_to_string(&mut result)
+            .map_err(|x| TvdbError::CommunicationError{
+                reason: format!("Error reading response: {}", x)})?;
+        return Ok(result);
+    }
+}
+
 
 /// Main interface
-#[derive(Debug, Clone)]
-pub struct Tvdb<'a> {
+#[derive(Debug,Clone)]
+pub struct Tvdb<'a>{
     /// Your API key from TheTVDB.com
     pub key: String,
     http_client: Option<&'a RequestClient>,
-    jwt_token: RefCell<Option<String>>,
-    default_client: Rc<RequestClient>,
-
 }
 
 
-/// https://api.thetvdb.com/swagger#/Authentication
-#[derive(Deserialize, Debug)]
-struct LoginResponse {
-    token: String,
-}
-
-/// List of `SeriesSearchData`, returned from a search
-#[derive(Deserialize, Debug)]
-pub struct SeriesSearchResult {
-    pub data: Vec<SeriesSearchData>,
-}
-
-/// Info for a single series, as returned from search query
-#[derive(Deserialize, Debug)]
-pub struct SeriesSearchData {
-    pub aliases: Option<Vec<String>>,
-    pub banner: Option<String>,
-    pub firstAired: Option<String>,
-    pub id: Option<i64>,
-    pub network: Option<String>,
-    pub overview: Option<String>,
-    pub seriesName: Option<String>,
-    pub status: Option<String>,
-}
-
-
-impl<'a> Tvdb<'a> {
-    /// Initalise API with the given API key. A key can be acquired via
+impl <'a>Tvdb <'a>{
+    /// Initalise API with the given API key. A key can be aquired via
     /// the [API Key Registration page](http://thetvdb.com/?tab=apiregister)
-    pub fn new<S>(key: S) -> Tvdb<'a>
-        where S: Into<String>,
-    {
-        Tvdb {
+    pub fn new<S>(key: S) -> Tvdb <'a> where S: Into<String>{
+        Tvdb{
             key: key.into(),
             http_client: None,
-            jwt_token: RefCell::new(None),
-            default_client: Rc::new(DefaultHttpClient {}),
         }
-    }
-
-    /// Set the JWT session token
-    fn set_token(&self, token: String) {
-        let mut j = self.jwt_token.borrow_mut();
-        *j = Some(token);
-    }
-    fn get_token(&self) -> Option<String> {
-        let j = self.jwt_token.borrow();
-        match *j {
-            None => None,
-            Some(ref t) => Some(format!("{}", *t)),
-        }
-    }
-
-    /// Authenticate with TheTVDB, storing the JWT token internally for use by
-    /// other methods.
-    pub fn login(&self) -> TvdbResult<bool> {
-        let mut map = HashMap::new();
-        map.insert("apikey", &self.key);
-
-        let c = reqwest::Client::new().unwrap();
-        let mut resp = c.post("https://api.thetvdb.com/login")
-            .json(&map)
-            .send()
-            .map_err(|x| {
-                TvdbError::CommunicationError { reason: format!("{}", x) }
-            })?;
-        let mut result = String::new();
-        resp.read_to_string(&mut result).map_err(|x| {
-            TvdbError::CommunicationError { reason: format!("Error reading response: {}", x) }
-        })?;
-
-        let deserialized: serde_json::Value = serde_json::from_str(&result).unwrap();
-        let tok: String = deserialized["token"].as_str().unwrap().into();
-        self.set_token(tok);
-
-        Ok(true)
     }
 
     /// Sets a custom client (implementation of `RequestClient`) used to
@@ -107,41 +82,145 @@ impl<'a> Tvdb<'a> {
         self.http_client = Some::<&'a RequestClient>(client);
     }
 
-    pub fn search(&self, name: &str) -> TvdbResult<SeriesSearchResult> {
-        let mut map: HashMap<&str, &str> = HashMap::new();
-        map.insert("name", name);
+    /// Searches for a given series name.
+    ///
+    /// # Errors
+    ///
+    /// Returns TvdbResult under various circumstances - typically
+    /// communication errors with TheTVDB servers, malformed XML
+    /// responses and so on.
+    ///
+    /// # Examples
+    /// ```
+    /// # let MY_API_KEY = "0629B785CE550C8D";
+    /// let api = tvdb::Tvdb::new(MY_API_KEY);
+    /// let results = api.search("Scrubs", "en");
+    /// match results{
+    ///    Ok(r) => println!("{}", r[0].seriesname), // Print series name of first result
+    ///    Err(_) => panic!(),
+    /// }
+    /// ```
+    pub fn search(&self, seriesname: &str, lang: &str) -> TvdbResult<Vec<SeriesSearchResult>> {
+        let params = url::form_urlencoded::Serializer::new(String::new())
+            .append_pair("seriesname", seriesname)
+            .append_pair("language", lang)
+            .finish();
 
-        let data = self.get_search_data(&map)?;
+        let url = format!("http://thetvdb.com/api/GetSeries.php?{}", params);
+        debug!("Getting {}", url);
 
-        // Parse result
-        let result: SeriesSearchResult = serde_json::from_str(&data).unwrap();
+        let default_client = DefaultHttpClient{}; // FIXME: Create one per instance
+        let c = self.http_client.unwrap_or(&default_client);
+        let data = try!(c.get_url(&url, None));
 
-        Ok(result)
+        let tree = try!(get_xmltree_from_str(data));
+
+        // Convert XML into structs
+        let mut results : Vec<SeriesSearchResult> = vec![];
+
+        for child in tree.children.iter(){
+
+            let r = SeriesSearchResult{
+                seriesid:    try!(get_int_req(child, "seriesid")),
+                seriesname:  try!(get_text_req(child, "SeriesName")),
+                language:    try!(get_text_req(child, "language")),
+                overview:    get_text_optional(child, "Overview"),
+                banner:      get_text_optional(child, "banner"),
+                imdb_id:     get_text_optional(child, "IMDB_ID"),
+                first_aired: try!(get_date_optional(child, "FirstAired")),
+                network:     get_text_optional(child, "Network"),
+                zap2it_id:   get_text_optional(child, "zap2it_id"),
+            };
+
+            results.push(r);
+        }
+
+        if results.is_empty(){
+            return Err(TvdbError::SeriesNotFound);
+        } else {
+            return Ok(results);
+        }
     }
 
-    pub fn search_imdb(&self, imdb_id: &str) -> TvdbResult<SeriesSearchResult> {
-        let mut params: HashMap<&str, &str> = HashMap::new();
-        params.insert("imdbId", imdb_id);
+    fn episode_inner(&self, epid: EpisodeId, season: u32, episode: u32) -> TvdbResult<EpisodeInfo>{
+        // <mirrorpath>/api/<apikey>/series/{seriesid}/default/{season}/{episode}/{language}.xml
 
-        let data = self.get_search_data(&params)?;
+        let url = format!("http://thetvdb.com/api/{apikey}/series/{seriesid}/default/{season}/{episode}/{language}.xml",
+                                    apikey=self.key,
+                                    seriesid=epid.seriesid,
+                                    language=epid.language,
+                                    season=season,
+                                    episode=episode,
+                                    );
+        debug!("Getting {}", url);
 
-        // Parse result
-        let result: SeriesSearchResult = serde_json::from_str(&data).unwrap();
+        // Perform request
+        let default_client = DefaultHttpClient{}; // FIXME: Create one per instance
+        let c = self.http_client.unwrap_or(&default_client);
+        let data = try!(c.get_url(&url, None));
 
-        Ok(result)
+        let tree = try!(get_xmltree_from_str(data));
+        let root = try!(tree.children.first()
+            .ok_or(TvdbError::DataError{reason:
+                format!("XML from {} had no child elements", url)}));
+
+        // Convert XML into struct
+        Ok(EpisodeInfo{
+            id:                  try!(get_int_req(root, "id")),
+            episode_name:        try!(get_text_req(root, "EpisodeName")),
+            first_aired:         try!(get_date_optional(root, "FirstAired")),
+            season_number:       try!(get_int_req(root, "SeasonNumber")),
+            season_dvd:          try!(get_int_optional(root, "DVD_season")),
+            season_combined:     try!(get_float_optional(root, "Combined_season")),
+            episode_number:      try!(get_int_req(root, "EpisodeNumber")),
+            episode_combined:    try!(get_float_optional(root, "Combined_episodenumber")),
+            episode_dvd:         try!(get_float_optional(root, "DVD_episodenumber")),
+            imdb_id:             get_text_optional(root, "IMDB_ID"),
+            language:            try!(get_text_req(root, "Language")),
+            overview:            get_text_optional(root, "Overview"),
+            production_code:     get_text_optional(root, "ProductionCode"),
+            rating:              try!(get_float_optional(root, "Rating")),
+            rating_count:        try!(get_int_optional(root, "RatingCount")),
+            guest_stars:         get_text_optional(root, "GuestStars"),
+            director:            get_text_optional(root, "Director"),
+            writer:              get_text_optional(root, "Writer"),
+            episode_absolute:    try!(get_int_optional(root, "absolute_number")),
+            airs_after_season:   try!(get_int_optional(root, "airsafter_season")),
+            airs_before_episode: try!(get_int_optional(root, "airsbefore_episode")),
+            airs_before_season:  try!(get_int_optional(root, "airsbefore_season")),
+            season_id:           try!(get_int_req(root, "seasonid")),
+            series_id:           try!(get_int_req(root, "seriesid")),
+            thumbnail:           get_text_optional(root, "filename"),
+            thumbnail_flag:      try!(get_int_optional(root, "EpImgFlag")),
+            thumbnail_added:     try!(get_date_optional(root, "thumb_added")),
+            thumbnail_width:     try!(get_int_optional(root, "thumb_width")),
+            thumbnail_height:    try!(get_int_optional(root, "thumb_width")),
+            last_updated:        try!(get_int_optional(root, "lastupdated")),
+
+        })
     }
 
-    fn get_search_data(&self, params: &HashMap<&str, &str>) -> TvdbResult<String> {
-        let search_url = "https://api.thetvdb.com/search/series";
-        let url: String = url::Url::parse_with_params(search_url, params)
-            .unwrap()
-            .as_str()
-            .into();
-        let dc = self.default_client.as_ref();
-        let c = self.http_client.unwrap_or(dc);
-        // Query URL
-        let data = c.get_url(&url, self.get_token())?;
-
-        return Ok(data);
+    /// Get episode information for given season/episode number
+    ///
+    /// # Examples
+    /// ```
+    /// # let MY_API_KEY = "0629B785CE550C8D";
+    /// let api = tvdb::Tvdb::new(MY_API_KEY);
+    ///
+    /// // Lookup the 23rd episode for the given series ID:
+    /// let ep_by_id = api.episode(76156, 1, 23).unwrap();
+    /// println!("{}", ep_by_id.episode_name);
+    ///
+    /// // More commonly, perform search for series
+    /// let sr = api.search("scrubs", "en").unwrap();
+    /// let ref first_result = sr[0];
+    ///
+    /// // ..then lookup the 23rd episode of the first result:
+    /// let ep = api.episode(first_result, 1, 23).unwrap();
+    /// println!("{}", ep.episode_name);
+    /// ```
+    pub fn episode<T: Into<EpisodeId>>(&self, epid: T, season: u32, episode: u32) -> TvdbResult<EpisodeInfo>{
+        self.episode_inner(epid.into(), season, episode)
     }
 }
+*/

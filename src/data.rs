@@ -1,5 +1,5 @@
 /// Used for air-date of an episode etc
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Date {
     /// Year (e.g 2001)
     pub year: u32,
@@ -11,47 +11,56 @@ pub struct Date {
 
 
 /// Series ID from TheTVDB.com, along with language
-#[derive(Debug,Clone)]
-pub struct EpisodeId{
+#[derive(Debug, Clone)]
+pub struct EpisodeId {
     /// Series ID
     pub seriesid: u32,
     /// Language code
     pub language: String,
 }
 
-impl EpisodeId{
+impl EpisodeId {
     /// Constructor
-    pub fn new(seriesid: u32, lang: &str) -> EpisodeId{
-        EpisodeId{
+    pub fn new(seriesid: u32, lang: &str) -> EpisodeId {
+        EpisodeId {
             seriesid: seriesid,
             language: lang.to_owned(),
         }
     }
 }
 
-impl From<u32> for EpisodeId{
-    fn from(x: u32) -> Self{
-        EpisodeId{seriesid: x, language: "en".to_owned()}
+impl From<u32> for EpisodeId {
+    fn from(x: u32) -> Self {
+        EpisodeId {
+            seriesid: x,
+            language: "en".to_owned(),
+        }
     }
 }
 
-impl From<SeriesSearchResult> for EpisodeId{
-    fn from(x: SeriesSearchResult) -> Self{
-        EpisodeId{seriesid: x.seriesid, language: x.language}
+impl From<SeriesSearchResult> for EpisodeId {
+    fn from(x: SeriesSearchResult) -> Self {
+        EpisodeId {
+            seriesid: x.seriesid,
+            language: x.language,
+        }
     }
 }
 
-impl<'a> From<&'a SeriesSearchResult> for EpisodeId{
-    fn from(x: &SeriesSearchResult) -> Self{
-        EpisodeId{seriesid: x.seriesid.clone(), language: x.language.clone()}
+impl<'a> From<&'a SeriesSearchResult> for EpisodeId {
+    fn from(x: &SeriesSearchResult) -> Self {
+        EpisodeId {
+            seriesid: x.seriesid.clone(),
+            language: x.language.clone(),
+        }
     }
 }
 
 
 /// Series info as returned from [TheTVDB's series search
 /// method](http://www.thetvdb.com/wiki/index.php?title=API:GetSeries)
-#[derive(Debug,Clone)]
-pub struct SeriesSearchResult{
+#[derive(Debug, Clone)]
+pub struct SeriesSearchResult {
     /// TheTVDB's series ID ('seriesid' is preferred over 'id' from XML response)
     pub seriesid: u32,
 
@@ -82,14 +91,13 @@ pub struct SeriesSearchResult{
 
 
 /// Base episode record, [details on TvDB Wiki](http://www.thetvdb.com/wiki/index.php?title=API:Base_Episode_Record)
-#[derive(Debug,Clone)]
-pub struct EpisodeInfo{
+#[derive(Debug, Clone)]
+pub struct EpisodeInfo {
     /// An unsigned integer assigned by TheTVDB to the episode. Cannot be null.
     pub id: u32, //id
 
     /// A string containing the episode name in the language requested. Will return the English name if no translation is available in the language requested.
     pub episode_name: String, // EpisodeName
-
 
     /// An unsigned integer representing the season number for the episode according to the aired order. Cannot be null.
     pub season_number: u32, // SeasonNumber
@@ -101,7 +109,6 @@ pub struct EpisodeInfo{
     /// (note: missing from episodes so made optional)
     pub season_combined: Option<f32>, // Combined_season
 
-
     /// An unsigned integer representing the episode number in its season according to the aired order. Cannot be null.
     pub episode_number: u32, // EpisodeNumber
 
@@ -111,7 +118,6 @@ pub struct EpisodeInfo{
 
     // DVD_chapter - deprecated
     // DVD_discid - deprecated
-
     /// A decimal with one decimal and can be used to join episodes together. Can be null, usually used to join episodes that aired as two episodes but were released on DVD as a single episode. If you see an episode 1.1 and 1.2 that means both records should be combined to make episode 1. Cartoons are also known to combine up to 9 episodes together, for example Animaniacs season two.
     pub episode_dvd: Option<f32>, // DVD_episodenumber
 
