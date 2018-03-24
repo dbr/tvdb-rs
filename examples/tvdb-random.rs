@@ -38,13 +38,13 @@ fn main() {
     let api = tvdb::Tvdb::new("0629B785CE550C8D");
 
     // Opening a bunch of ~random series to check for panicing
-    let seed: &[_] = &[1, 2, 3, 4];
+    let seed: &[_] = &[1, 2, 3, 4, 5];
     let mut rng: StdRng = SeedableRng::from_seed(seed);
     for _ in 0..num {
         let rid = rng.gen_range::<u32>(70000, 80000);
         println!("Getting series {}", rid);
 
-        let ep = api.episode(tvdb::EpisodeId::new(rid, "en"), season_no, episode_no);
+        let ep = api.episode(tvdb::EpisodeId::new(rid, "en"));
         match ep {
             Ok(ep) => println!("Okay  ID {}: {}", rid, ep.episode_name),
             Err(e) => println!("Error ID {}: {:?}", rid, e),

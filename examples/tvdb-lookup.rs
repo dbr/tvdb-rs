@@ -38,9 +38,9 @@ fn main() {
     // Loop over found series
     for r in sr.data.iter() {
         // Print: "Series Name" (id: 12345)
-        println!("{:?} (id: {})", r.seriesname, r.seriesid);
+        //println!("{:?} (id: {})", r.seriesname, r.seriesid); // FIXME
 
         // Get episode information
-        println!("{:?}", api.episode(&sr[0], season_no, episode_no));
+        //println!("{:?}", api.episode(&sr[0], season_no, episode_no)); // FIXME
     }
 }

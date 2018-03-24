@@ -17,15 +17,16 @@ impl From<tvdb::TvdbError> for MyError {
 fn lookup_tvdb(series: &str, season: u32, episode: u32) -> Result<String, MyError> {
     // Create API with your API key
     let api = tvdb::Tvdb::new("0629B785CE550C8D");
+    api.login().unwrap();
 
     // Perform search (returns a vector of SeriesSearchResult's)
     let lang = "en"; // Search for English show
-    let sr = try!(api.search(series));
+    let sr = api.search(series)?;
 
     if sr.data.len() > 0 {
         // Look up episode based on reference to first result (the API automatically creates an
         // tvdb::EpisodeId from the `SeriesSearchResult` which the `search` method returns)
-        let ep = try!(api.episode(&sr[0], season, episode));
+        let ep = try!(api.episode(123));// FIXME &sr.data[0], season, episode));
 
         // Return episode name
         return Ok(ep.episode_name);

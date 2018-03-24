@@ -3,7 +3,6 @@
 //! [apidoc]: http://www.thetvdb.com/wiki/index.php/Programmers_API
 //! [tvdb]: http://thetvdb.com
 
-#[macro_use]
 extern crate log;
 
 extern crate xmltree;
@@ -28,4 +27,4 @@ pub use api::{Tvdb, RequestClient};
 pub use error::{TvdbError, TvdbResult};
 
 // Expose data types
-pub use data::{Date, EpisodeId, SeriesSearchResult, EpisodeInfo};
+pub use data::{Date, EpisodeId};

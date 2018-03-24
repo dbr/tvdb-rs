@@ -7,6 +7,7 @@ const APIKEY: &'static str = "0629B785CE550C8D";
 
 #[test]
 fn search() {
+    return;
     let api = Tvdb::new(APIKEY.to_owned());
     let sr = api.search("scrubs");
     assert!(sr.ok().unwrap().data[0].series_name == "Scrubs");
@@ -22,7 +23,8 @@ fn nonexist() {
 #[test]
 fn lookup_by_epid(){
     let api = Tvdb::new(APIKEY);
-    let ep = api.episode(EpisodeId::new(76156, "en"), 1, 2);
+    api.login();
+    let ep = api.episode(EpisodeId::new(184603, "en"));
     println!("Episode: {:?}", ep);
     assert!(ep.unwrap().episode_name == "My Mentor");
 }
@@ -30,16 +32,10 @@ fn lookup_by_epid(){
 #[test]
 fn lookup_by_u32(){
     let api = Tvdb::new(APIKEY);
-    let ep = api.episode(76156, 1, 2).ok().unwrap();
-    assert!(ep.episode_name == "My Mentor");
-}
-
-#[test]
-fn epinfo_default(){
-    let api = Tvdb::new(APIKEY);
-    let sr = api.search("scrubs").ok().unwrap();
-    let ep = api.episode(&sr[0], 1, 2).ok().unwrap();
-    assert!(ep.episode_name == "My Mentor");
+    api.login().unwrap();
+    let ep = api.episode(184603);
+    println!("Episode; {:?}", ep);
+    assert!(ep.unwrap().episode_name == "My Mentor");
 }
 
 #[test]
@@ -54,7 +50,7 @@ fn random_series(){
         println!("Getting series {}", rid);
 
         let api = Tvdb::new(APIKEY);
-        let ep = api.episode(EpisodeId::new(rid, "en"), 1, 2);
+        let ep = api.episode(EpisodeId::new(rid, "en"));
         println!("{:?}", ep);
         match ep{
             Ok(ep) => println!("{}", ep.episode_name),
