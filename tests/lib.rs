@@ -23,7 +23,7 @@ fn nonexist() {
 #[test]
 fn lookup_by_epid(){
     let api = Tvdb::new(APIKEY);
-    api.login();
+    api.login().unwrap();
     let ep = api.episode(EpisodeId::new(184603, "en"));
     println!("Episode: {:?}", ep);
     assert!(ep.unwrap().episode_name == "My Mentor");
