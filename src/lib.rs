@@ -5,7 +5,6 @@
 
 extern crate log;
 
-extern crate xmltree;
 extern crate reqwest;
 extern crate url;
 
@@ -15,7 +14,6 @@ extern crate serde;
 extern crate serde_json;
 
 // Module structure
-mod parse;
 mod error;
 mod data;
 pub mod api;
