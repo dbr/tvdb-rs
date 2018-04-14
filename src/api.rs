@@ -82,15 +82,14 @@ pub struct SeriesSearchResult {
 
 /// Info for a single series, as returned from search query
 #[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct SeriesSearchData {
     pub aliases: Option<Vec<String>>,
     pub banner: Option<String>,
-    #[serde(rename = "firstAired")]
     pub first_aired: Option<String>,
     pub id: Option<u32>,
     pub network: Option<String>,
     pub overview: Option<String>,
-    #[serde(rename = "seriesName")]
     pub series_name: String,
     pub status: Option<String>,
 }
