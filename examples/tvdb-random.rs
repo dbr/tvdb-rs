@@ -1,11 +1,10 @@
-extern crate tvdb;
 extern crate argparse;
-extern crate rand;
 extern crate env_logger;
+extern crate rand;
+extern crate tvdb;
 
 use argparse::{ArgumentParser, Store};
 use rand::{Rng, SeedableRng, StdRng};
-
 
 fn main() {
     env_logger::init();
@@ -21,16 +20,10 @@ fn main() {
             Store,
             "Number of random series to parse",
         );
-        ap.refer(&mut season_no).add_option(
-            &["-s", "--season"],
-            Store,
-            "Season number",
-        );
-        ap.refer(&mut episode_no).add_option(
-            &["-e", "--episode"],
-            Store,
-            "Episode number",
-        );
+        ap.refer(&mut season_no)
+            .add_option(&["-s", "--season"], Store, "Season number");
+        ap.refer(&mut episode_no)
+            .add_option(&["-e", "--episode"], Store, "Episode number");
         ap.parse_args_or_exit();
     }
 
@@ -50,5 +43,4 @@ fn main() {
             Err(e) => println!("Error ID {}: {:?}", rid, e),
         }
     }
-
 }

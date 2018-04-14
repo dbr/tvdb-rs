@@ -1,17 +1,16 @@
-use std::io::Read;
-use std::collections::HashMap;
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::collections::HashMap;
 use std::fmt::Debug;
+use std::io::Read;
+use std::rc::Rc;
 
-use url;
-use serde_json;
 use reqwest;
-use reqwest::header::{Headers, Authorization, Bearer};
+use reqwest::header::{Authorization, Bearer, Headers};
+use serde_json;
+use url;
 
 use super::error::{TvdbError, TvdbResult};
-use data::{SeriesId, EpisodeId};
-
+use data::{EpisodeId, SeriesId};
 
 /// Trait for custom implementations of URL fetching
 pub trait RequestClient: Debug {
@@ -22,40 +21,41 @@ pub trait RequestClient: Debug {
 #[derive(Debug)]
 pub struct DefaultHttpClient;
 
-impl RequestClient for DefaultHttpClient{
-    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String>{
+impl RequestClient for DefaultHttpClient {
+    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String> {
         // Make request
         let client = reqwest::Client::new();
 
         let mut headers = Headers::new();
-        if let Some(tok) = jwt_token{
-            headers.set(
-               Authorization(
-                   Bearer{token: tok.into()}
-               )
-            );
+        if let Some(tok) = jwt_token {
+            headers.set(Authorization(Bearer { token: tok.into() }));
         }
 
-        let mut resp = client.get(url)
-            .headers(headers)
-            .send()
-            .map_err(|x| TvdbError::CommunicationError{
-                reason: format!("Error creating HTTP request: {}", x)})?;
+        let mut resp = client.get(url).headers(headers).send().map_err(|x| {
+            TvdbError::CommunicationError {
+                reason: format!("Error creating HTTP request: {}", x),
+            }
+        })?;
 
         // Check response
         if !resp.status().is_success() {
-            return Err(TvdbError::CommunicationError{
-                reason: format!("Unsuccessful HTTP response from url {}: {}", url, resp.status())})
+            return Err(TvdbError::CommunicationError {
+                reason: format!(
+                    "Unsuccessful HTTP response from url {}: {}",
+                    url,
+                    resp.status()
+                ),
+            });
         }
 
         let mut result = String::new();
         resp.read_to_string(&mut result)
-            .map_err(|x| TvdbError::CommunicationError{
-                reason: format!("Error reading response: {}", x)})?;
+            .map_err(|x| TvdbError::CommunicationError {
+                reason: format!("Error reading response: {}", x),
+            })?;
         return Ok(result);
     }
 }
-
 
 /// Main interface
 #[derive(Debug, Clone)]
@@ -66,7 +66,6 @@ pub struct Tvdb<'a> {
     jwt_token: RefCell<Option<String>>,
     default_client: Rc<RequestClient>,
 }
-
 
 /// https://api.thetvdb.com/swagger#/Authentication
 #[derive(Deserialize, Debug)]
@@ -86,12 +85,12 @@ pub struct SeriesSearchResult {
 pub struct SeriesSearchData {
     pub aliases: Option<Vec<String>>,
     pub banner: Option<String>,
-    #[serde(rename="firstAired")]
+    #[serde(rename = "firstAired")]
     pub first_aired: Option<String>,
     pub id: Option<u32>,
     pub network: Option<String>,
     pub overview: Option<String>,
-    #[serde(rename="seriesName")]
+    #[serde(rename = "seriesName")]
     pub series_name: String,
     pub status: Option<String>,
 }
@@ -157,7 +156,6 @@ pub struct Episode {
     pub writers: Option<Vec<String>>,
 }
 
-
 #[derive(Deserialize, Debug, Clone)]
 pub struct SeriesEpisodes {
     pub data: Option<Vec<BasicEpisode>>,
@@ -193,7 +191,8 @@ impl<'a> Tvdb<'a> {
     /// Initalise API with the given API key. A key can be acquired via
     /// the [API Key Registration page](http://thetvdb.com/?tab=apiregister)
     pub fn new<S>(key: S) -> Tvdb<'a>
-        where S: Into<String>,
+    where
+        S: Into<String>,
     {
         Tvdb {
             key: key.into(),
@@ -228,13 +227,14 @@ impl<'a> Tvdb<'a> {
         let mut resp = c.post("https://api.thetvdb.com/login")
             .json(&map)
             .send()
-            .map_err(|x| {
-                TvdbError::CommunicationError { reason: format!("{}", x) }
+            .map_err(|x| TvdbError::CommunicationError {
+                reason: format!("{}", x),
             })?;
         let mut result = String::new();
-        resp.read_to_string(&mut result).map_err(|x| {
-            TvdbError::CommunicationError { reason: format!("Error reading response: {}", x) }
-        })?;
+        resp.read_to_string(&mut result)
+            .map_err(|x| TvdbError::CommunicationError {
+                reason: format!("Error reading response: {}", x),
+            })?;
 
         let deserialized: serde_json::Value = serde_json::from_str(&result).unwrap();
         let tok: String = deserialized["token"].as_str().unwrap().into();
@@ -251,7 +251,11 @@ impl<'a> Tvdb<'a> {
 
     /// Search for series by name or IMDB ID
     /// <https://api.thetvdb.com/swagger#!/Search/get_search_series>
-    pub fn search(&self, name: Option<&str>, imdb_id: Option<&str>) -> TvdbResult<SeriesSearchResult> {
+    pub fn search(
+        &self,
+        name: Option<&str>,
+        imdb_id: Option<&str>,
+    ) -> TvdbResult<SeriesSearchResult> {
         let dc = self.default_client.as_ref();
         let c = self.http_client.unwrap_or(dc);
 
@@ -283,16 +287,16 @@ impl<'a> Tvdb<'a> {
 
         // TODO Use `id.language`
 
-        let url = format!(
-            "https://api.thetvdb.com/episodes/{id}",
-            id=id.seriesid);
+        let url = format!("https://api.thetvdb.com/episodes/{id}", id = id.seriesid);
         let data = c.get_url(&url, self.get_token())?;
         // Parse result
         println!("{}", data);
         let result: Result<EpisodeRecordData, serde_json::Error> = serde_json::from_str(&data);
-        match result{
+        match result {
             Ok(r) => Ok(r.data.unwrap()),
-            Err(e) => Err(TvdbError::DataError{reason: e.to_string()})
+            Err(e) => Err(TvdbError::DataError {
+                reason: e.to_string(),
+            }),
         }
     }
 
@@ -310,18 +314,26 @@ impl<'a> Tvdb<'a> {
 
         let url = format!(
             "https://api.thetvdb.com/series/{id}/episodes?page={page}",
-            id=id.seriesid, page=page);
+            id = id.seriesid,
+            page = page
+        );
         let data = c.get_url(&url, self.get_token())?;
         // Parse result
         let result: Result<SeriesEpisodes, serde_json::Error> = serde_json::from_str(&data);
-        match result{
+        match result {
             Ok(r) => Ok(r),
-            Err(e) => Err(TvdbError::DataError{reason: e.to_string()})
+            Err(e) => Err(TvdbError::DataError {
+                reason: e.to_string(),
+            }),
         }
     }
 
     /// All episodes for given series
-    pub fn series_episodes<T: Into<SeriesId>>(&self, id: T, page: u32) -> TvdbResult<SeriesEpisodes> {
+    pub fn series_episodes<T: Into<SeriesId>>(
+        &self,
+        id: T,
+        page: u32,
+    ) -> TvdbResult<SeriesEpisodes> {
         self.series_episodes_inner(id.into(), page)
     }
 }

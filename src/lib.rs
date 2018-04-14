@@ -8,9 +8,9 @@ extern crate log;
 extern crate reqwest;
 extern crate url;
 
+extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
 extern crate serde_json;
 
 // Module structure
@@ -19,7 +19,7 @@ mod data;
 pub mod api;
 
 // Main public API
-pub use api::{Tvdb, RequestClient};
+pub use api::{RequestClient, Tvdb};
 
 // Expose error types
 pub use error::{TvdbError, TvdbResult};

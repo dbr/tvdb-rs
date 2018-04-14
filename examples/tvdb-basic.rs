@@ -9,7 +9,9 @@ enum MyError {
 
 impl From<tvdb::TvdbError> for MyError {
     fn from(err: tvdb::TvdbError) -> MyError {
-        MyError::ErrorFromTvdb { reason: format!("{}", err) }
+        MyError::ErrorFromTvdb {
+            reason: format!("{}", err),
+        }
     }
 }
 

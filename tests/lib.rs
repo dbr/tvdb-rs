@@ -1,7 +1,7 @@
-extern crate tvdb;
 extern crate rand;
+extern crate tvdb;
 
-use tvdb::{Tvdb, EpisodeId, TvdbResult, TvdbError};
+use tvdb::{EpisodeId, Tvdb, TvdbError, TvdbResult};
 
 const APIKEY: &'static str = "0629B785CE550C8D";
 
@@ -22,7 +22,7 @@ fn nonexist() {
 }
 
 #[test]
-fn lookup_by_epid(){
+fn lookup_by_epid() {
     let api = Tvdb::new(APIKEY);
     api.login().unwrap();
     let ep = api.episode(EpisodeId::new(184603, "en"));
@@ -31,7 +31,7 @@ fn lookup_by_epid(){
 }
 
 #[test]
-fn lookup_by_u32(){
+fn lookup_by_u32() {
     let api = Tvdb::new(APIKEY);
     api.login().unwrap();
     let ep = api.episode(184603);
@@ -40,32 +40,32 @@ fn lookup_by_u32(){
 }
 
 #[test]
-fn random_series(){
+fn random_series() {
     // Opening a bunch of ~random series to check for panicing
     use rand::{Rng, SeedableRng, StdRng};
 
     let seed: &[_] = &[1, 2, 3, 4];
     let mut rng: StdRng = SeedableRng::from_seed(seed);
-    for _ in 1..10{
+    for _ in 1..10 {
         let rid = rng.gen_range::<u32>(1, 20000);
         println!("Getting series {}", rid);
 
         let api = Tvdb::new(APIKEY);
         let ep = api.episode(EpisodeId::new(rid, "en"));
         println!("{:?}", ep);
-        match ep{
+        match ep {
             Ok(ep) => println!("{}", ep.episode_name),
             Err(e) => println!("{:?}", e),
         }
     }
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 struct DummyRequestClient;
 
-impl DummyRequestClient{
-    pub fn new() -> DummyRequestClient{
-        return DummyRequestClient{};
+impl DummyRequestClient {
+    pub fn new() -> DummyRequestClient {
+        return DummyRequestClient {};
     }
 }
 use tvdb::RequestClient;
@@ -90,19 +90,19 @@ fn custom_http_client() {
     let result = api.search(Some("scrubs"), None);
     println!("{:?}", result);
 
-    match result{
+    match result {
         Ok(_) => panic!("Expected error"),
-        Err(e) => (
-            match e {
-                TvdbError::CommunicationError{reason: _} => (),
+        Err(e) => {
+            (match e {
+                TvdbError::CommunicationError { reason: _ } => (),
                 _ => panic!("Unexpected"),
-            }
-        ),
+            })
+        }
     }
 }
 
 #[test]
-fn all_episodes(){
+fn all_episodes() {
     let api = Tvdb::new(APIKEY.to_owned());
     api.login().unwrap();
     let sr = api.search(Some("scrubs"), None).unwrap();

@@ -1,8 +1,7 @@
-extern crate tvdb;
 extern crate argparse;
+extern crate tvdb;
 
 use argparse::{ArgumentParser, Store};
-
 
 fn main() {
     let mut series_name = "".to_owned();
@@ -11,21 +10,12 @@ fn main() {
 
     {
         let mut ap = ArgumentParser::new();
-        ap.refer(&mut series_name).add_argument(
-            "series",
-            Store,
-            "Series name",
-        );
-        ap.refer(&mut season_no).add_argument(
-            "season",
-            Store,
-            "Season number",
-        );
-        ap.refer(&mut episode_no).add_argument(
-            "episode",
-            Store,
-            "Episode number",
-        );
+        ap.refer(&mut series_name)
+            .add_argument("series", Store, "Series name");
+        ap.refer(&mut season_no)
+            .add_argument("season", Store, "Season number");
+        ap.refer(&mut episode_no)
+            .add_argument("episode", Store, "Episode number");
         ap.parse_args_or_exit();
     }
 
