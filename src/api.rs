@@ -87,7 +87,7 @@ pub struct SeriesSearchData {
     pub banner: Option<String>,
     #[serde(rename="firstAired")]
     pub first_aired: Option<String>,
-    pub id: Option<i64>,
+    pub id: Option<u32>,
     pub network: Option<String>,
     pub overview: Option<String>,
     #[serde(rename="seriesName")]
@@ -106,13 +106,14 @@ impl From<SeriesSearchData> for EpisodeId {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-struct JSONErrors {
-    invalid_filters: Option<Vec<String>>,
-    invalid_language: Option<Vec<String>>,
-    invalid_query_params: Option<Vec<String>>,
+pub struct JSONErrors {
+    pub invalid_filters: Option<Vec<String>>,
+    pub invalid_language: Option<Vec<String>>,
+    pub invalid_query_params: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct EpisodeRecordData {
     data: Option<Episode>,
     errors: Option<JSONErrors>,
@@ -122,7 +123,6 @@ pub struct EpisodeRecordData {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Episode {
-    #[serde(rename="absoluteNumber")]
     pub absolute_number: Option<u32>,
     pub aired_episode_number: Option<u32>,
     pub aired_season: Option<u32>,
@@ -135,7 +135,7 @@ pub struct Episode {
     pub dvd_discid: Option<String>,
     pub dvd_episode_number: Option<u32>,
     pub dvd_season: Option<u32>,
-    pub episode_name: String, // FIXME: Should be optioal
+    pub episode_name: String, // FIXME: Should be optional
     pub filename: Option<String>,
     pub first_aired: Option<String>,
     pub guest_stars: Option<Vec<String>>,
@@ -156,6 +156,37 @@ pub struct Episode {
     pub writers: Option<Vec<String>>,
 }
 
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct SeriesEpisodes {
+    pub data: Option<Vec<BasicEpisode>>,
+    pub errors: Option<JSONErrors>,
+    pub links: Option<Links>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BasicEpisode {
+    pub absolute_number: Option<u32>,
+    pub aired_episode_number: Option<u32>,
+    pub aired_season: Option<u32>,
+    pub dvd_episode_number: Option<u32>,
+    pub dvd_season: Option<u32>,
+    pub episode_name: Option<String>,
+    pub first_aired: Option<String>,
+    pub id: Option<u32>,
+    pub last_updated: Option<u32>,
+    pub overview: Option<String>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Links {
+    pub first: Option<u32>,
+    pub last: Option<u32>,
+    pub next: Option<u32>,
+    pub previous: Option<u32>,
+}
 
 impl<'a> Tvdb<'a> {
     /// Initalise API with the given API key. A key can be acquired via
@@ -259,6 +290,8 @@ impl<'a> Tvdb<'a> {
         let dc = self.default_client.as_ref();
         let c = self.http_client.unwrap_or(dc);
 
+        // TODO Use `id.language`
+
         let url = format!(
             "https://api.thetvdb.com/episodes/{id}",
             id=id.seriesid);
@@ -274,5 +307,27 @@ impl<'a> Tvdb<'a> {
 
     pub fn episode<T: Into<EpisodeId>>(&self, id: T) -> TvdbResult<Episode> {
         self.episode_inner(id.into())
+    }
+
+    pub fn series_episodes_inner(&self, id: EpisodeId) -> TvdbResult<SeriesEpisodes> {
+        let dc = self.default_client.as_ref();
+        let c = self.http_client.unwrap_or(dc);
+
+        // TODO Use `id.language`
+
+        let url = format!(
+            "https://api.thetvdb.com/series/{id}/episodes",
+            id=id.seriesid);
+        let data = c.get_url(&url, self.get_token())?;
+        // Parse result
+        let result: Result<SeriesEpisodes, serde_json::Error> = serde_json::from_str(&data);
+        match result{
+            Ok(r) => Ok(r),
+            Err(e) => Err(TvdbError::DataError{reason: e.to_string()})
+        }
+    }
+
+    pub fn series_episodes<T: Into<EpisodeId>>(&self, id: T) -> TvdbResult<SeriesEpisodes> {
+        self.series_episodes_inner(id.into())
     }
 }

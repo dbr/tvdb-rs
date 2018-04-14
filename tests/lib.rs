@@ -7,7 +7,6 @@ const APIKEY: &'static str = "0629B785CE550C8D";
 
 #[test]
 fn search() {
-    return;
     let api = Tvdb::new(APIKEY.to_owned());
     let sr = api.search("scrubs");
     assert!(sr.ok().unwrap().data[0].series_name == "Scrubs");
@@ -93,4 +92,17 @@ fn custom_http_client() {
             }
         ),
     }
+}
+
+#[test]
+fn all_episodes(){
+    let api = Tvdb::new(APIKEY.to_owned());
+    api.login().unwrap();
+    let sr = api.search("scrubs").unwrap();
+    let first_id = sr.data[0].id.unwrap();
+    let eps = api.series_episodes(first_id).unwrap();
+    let data = eps.data.unwrap();
+    assert!(data.len() > 10);
+    let ep = data[0].clone();
+    assert!(ep.episode_name.unwrap() == "My First Day");
 }
