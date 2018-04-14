@@ -302,15 +302,15 @@ impl<'a> Tvdb<'a> {
         self.episode_inner(id.into())
     }
 
-    fn series_episodes_inner(&self, id: SeriesId) -> TvdbResult<SeriesEpisodes> {
+    fn series_episodes_inner(&self, id: SeriesId, page: u32) -> TvdbResult<SeriesEpisodes> {
         let dc = self.default_client.as_ref();
         let c = self.http_client.unwrap_or(dc);
 
         // TODO Use `id.language`
 
         let url = format!(
-            "https://api.thetvdb.com/series/{id}/episodes",
-            id=id.seriesid);
+            "https://api.thetvdb.com/series/{id}/episodes?page={page}",
+            id=id.seriesid, page=page);
         let data = c.get_url(&url, self.get_token())?;
         // Parse result
         let result: Result<SeriesEpisodes, serde_json::Error> = serde_json::from_str(&data);
@@ -320,8 +320,8 @@ impl<'a> Tvdb<'a> {
         }
     }
 
-    ///
-    pub fn series_episodes<T: Into<SeriesId>>(&self, id: T) -> TvdbResult<SeriesEpisodes> {
-        self.series_episodes_inner(id.into())
+    /// All episodes for given series
+    pub fn series_episodes<T: Into<SeriesId>>(&self, id: T, page: u32) -> TvdbResult<SeriesEpisodes> {
+        self.series_episodes_inner(id.into(), page)
     }
 }

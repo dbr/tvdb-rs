@@ -102,7 +102,7 @@ fn all_episodes(){
     api.login().unwrap();
     let sr = api.search(Some("scrubs"), None).unwrap();
     let first_id = sr.data.unwrap()[0].id.unwrap();
-    let eps = api.series_episodes(first_id).unwrap();
+    let eps = api.series_episodes(first_id, 1).unwrap();
     let data = eps.data.unwrap();
     assert!(data.len() > 10);
     let ep = data[0].clone();
