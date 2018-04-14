@@ -301,7 +301,10 @@ impl<'a> Tvdb<'a> {
 
     /// Full information about given episode
     /// <https://api.thetvdb.com/swagger#!/Episodes/get_episodes_id>
-    pub fn episode<T: Into<EpisodeId>>(&self, id: T) -> TvdbResult<Episode> {
+    pub fn episode<E>(&self, id: E) -> TvdbResult<Episode>
+    where
+        E: Into<EpisodeId>,
+    {
         self.episode_inner(id.into())
     }
 
@@ -328,11 +331,10 @@ impl<'a> Tvdb<'a> {
     }
 
     /// All episodes for given series
-    pub fn series_episodes<T: Into<SeriesId>>(
-        &self,
-        id: T,
-        page: u32,
-    ) -> TvdbResult<SeriesEpisodes> {
+    pub fn series_episodes<S>(&self, id: S, page: u32) -> TvdbResult<SeriesEpisodes>
+    where
+        S: Into<SeriesId>,
+    {
         self.series_episodes_inner(id.into(), page)
     }
 }
