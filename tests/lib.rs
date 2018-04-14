@@ -8,14 +8,16 @@ const APIKEY: &'static str = "0629B785CE550C8D";
 #[test]
 fn search() {
     let api = Tvdb::new(APIKEY.to_owned());
-    let sr = api.search("scrubs");
-    assert!(sr.ok().unwrap().data[0].series_name == "Scrubs");
+    api.login().unwrap();
+    let sr = api.search(Some("scrubs"), None);
+    println!("{:?}", sr);
+    assert!(sr.ok().unwrap().data.unwrap()[0].series_name == "Scrubs");
 }
 
 #[test]
 fn nonexist() {
     let api = Tvdb::new(APIKEY);
-    let sr = api.search("ladlkgdklfgsdfglk");
+    let sr = api.search(Some("ladlkgdklfgsdfglk"), None);
     assert!(sr.is_err());
 }
 
@@ -80,7 +82,7 @@ fn custom_http_client() {
     let mut api = Tvdb::new(APIKEY);
     api.set_http_client(&c);
 
-    let result = api.search("scrubs");
+    let result = api.search(Some("scrubs"), None);
     println!("{:?}", result);
 
     match result{
@@ -98,8 +100,8 @@ fn custom_http_client() {
 fn all_episodes(){
     let api = Tvdb::new(APIKEY.to_owned());
     api.login().unwrap();
-    let sr = api.search("scrubs").unwrap();
-    let first_id = sr.data[0].id.unwrap();
+    let sr = api.search(Some("scrubs"), None).unwrap();
+    let first_id = sr.data.unwrap()[0].id.unwrap();
     let eps = api.series_episodes(first_id).unwrap();
     let data = eps.data.unwrap();
     assert!(data.len() > 10);

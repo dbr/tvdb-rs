@@ -7,8 +7,8 @@ static APIKEY: &'static str = "0629B785CE550C8D";
 fn basic() {
     let t = Tvdb::new(APIKEY);
     t.login().unwrap();
-    let sr = t.search("scrubs").unwrap();
-    for s in sr.data.iter() {
+    let sr = t.search(Some("scrubs"), None).unwrap();
+    for s in sr.data.unwrap().iter() {
         println!("{:?}: ID {:?}", s.series_name, s.id);
     }
 }
@@ -17,8 +17,8 @@ fn basic() {
 fn search_by_imdb() {
     let t = Tvdb::new(APIKEY);
     t.login().unwrap();
-    let sr = t.search_imdb("tt0285403").unwrap();
-    for s in sr.data.iter() {
+    let sr = t.search(None, Some("tt0285403")).unwrap();
+    for s in sr.data.unwrap().iter() {
         println!("{:?}: ID {:?}", s.series_name, s.id);
     }
 }

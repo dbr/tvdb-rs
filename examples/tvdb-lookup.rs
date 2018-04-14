@@ -31,16 +31,5 @@ fn main() {
 
     // Construct API object
     let api = tvdb::Tvdb::new("0629B785CE550C8D");
-
-    // Search for series
-    let sr = api.search(&series_name).ok().unwrap();
-
-    // Loop over found series
-    for r in sr.data.iter() {
-        // Print: "Series Name" (id: 12345)
-        //println!("{:?} (id: {})", r.seriesname, r.seriesid); // FIXME
-
-        // Get episode information
-        //println!("{:?}", api.episode(&sr[0], season_no, episode_no)); // FIXME
-    }
+    // FIXME
 }

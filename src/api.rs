@@ -10,7 +10,7 @@ use reqwest;
 use reqwest::header::{Headers, Authorization, Bearer};
 
 use super::error::{TvdbError, TvdbResult};
-use data::{EpisodeId};
+use data::{SeriesId, EpisodeId};
 
 
 /// Trait for custom implementations of URL fetching
@@ -77,7 +77,8 @@ struct LoginResponse {
 /// List of `SeriesSearchData`, returned from a search
 #[derive(Deserialize, Debug)]
 pub struct SeriesSearchResult {
-    pub data: Vec<SeriesSearchData>,
+    pub data: Option<Vec<SeriesSearchData>>,
+    pub error: Option<String>,
 }
 
 /// Info for a single series, as returned from search query
@@ -248,42 +249,32 @@ impl<'a> Tvdb<'a> {
         self.http_client = Some::<&'a RequestClient>(client);
     }
 
-    pub fn search(&self, name: &str) -> TvdbResult<SeriesSearchResult> {
-        let mut map: HashMap<&str, &str> = HashMap::new();
-        map.insert("name", name);
+    /// Search for series by name or IMDB ID
+    /// <https://api.thetvdb.com/swagger#!/Search/get_search_series>
+    pub fn search(&self, name: Option<&str>, imdb_id: Option<&str>) -> TvdbResult<SeriesSearchResult> {
+        let dc = self.default_client.as_ref();
+        let c = self.http_client.unwrap_or(dc);
 
-        let data = self.get_search_data(&map)?;
-
-        // Parse result
-        let result: SeriesSearchResult = serde_json::from_str(&data).unwrap();
-
-        Ok(result)
-    }
-
-    pub fn search_imdb(&self, imdb_id: &str) -> TvdbResult<SeriesSearchResult> {
         let mut params: HashMap<&str, &str> = HashMap::new();
-        params.insert("imdbId", imdb_id);
+        if let Some(n) = name {
+            params.insert("name", n);
+        }
+        if let Some(i) = imdb_id {
+            params.insert("imdbId", i);
+        }
 
-        let data = self.get_search_data(&params)?;
-
-        // Parse result
-        let result: SeriesSearchResult = serde_json::from_str(&data).unwrap();
-
-        Ok(result)
-    }
-
-    fn get_search_data(&self, params: &HashMap<&str, &str>) -> TvdbResult<String> {
         let search_url = "https://api.thetvdb.com/search/series";
         let url: String = url::Url::parse_with_params(search_url, params)
             .unwrap()
             .as_str()
             .into();
-        let dc = self.default_client.as_ref();
-        let c = self.http_client.unwrap_or(dc);
         // Query URL
         let data = c.get_url(&url, self.get_token())?;
 
-        return Ok(data);
+        // Parse result
+        let result: SeriesSearchResult = serde_json::from_str(&data).unwrap();
+
+        Ok(result)
     }
 
     fn episode_inner(&self, id: EpisodeId) -> TvdbResult<Episode> {
@@ -305,11 +296,13 @@ impl<'a> Tvdb<'a> {
         }
     }
 
+    /// Full information about given episode
+    /// <https://api.thetvdb.com/swagger#!/Episodes/get_episodes_id>
     pub fn episode<T: Into<EpisodeId>>(&self, id: T) -> TvdbResult<Episode> {
         self.episode_inner(id.into())
     }
 
-    pub fn series_episodes_inner(&self, id: EpisodeId) -> TvdbResult<SeriesEpisodes> {
+    fn series_episodes_inner(&self, id: SeriesId) -> TvdbResult<SeriesEpisodes> {
         let dc = self.default_client.as_ref();
         let c = self.http_client.unwrap_or(dc);
 
@@ -327,7 +320,8 @@ impl<'a> Tvdb<'a> {
         }
     }
 
-    pub fn series_episodes<T: Into<EpisodeId>>(&self, id: T) -> TvdbResult<SeriesEpisodes> {
+    ///
+    pub fn series_episodes<T: Into<SeriesId>>(&self, id: T) -> TvdbResult<SeriesEpisodes> {
         self.series_episodes_inner(id.into())
     }
 }

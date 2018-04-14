@@ -13,7 +13,7 @@ impl From<tvdb::TvdbError> for MyError {
     }
 }
 
-
+/*
 fn lookup_tvdb(series: &str, season: u32, episode: u32) -> Result<String, MyError> {
     // Create API with your API key
     let api = tvdb::Tvdb::new("0629B785CE550C8D");
@@ -35,10 +35,14 @@ fn lookup_tvdb(series: &str, season: u32, episode: u32) -> Result<String, MyErro
         return Err(MyError::NotFound);
     }
 }
+*/
 
 fn main() {
+    // FIXME
+    /*
     match lookup_tvdb("Scrubs", 1, 22) {
         Ok(name) => println!("Success: {}", name),
         Err(e) => println!("Error: {:?}", e),
     }
+    */
 }

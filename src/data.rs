@@ -9,6 +9,18 @@ pub struct Date {
     pub day: u32,
 }
 
+pub struct SeriesId {
+    pub seriesid: u32,
+}
+
+impl From<u32> for SeriesId {
+    fn from(x: u32) -> Self {
+        SeriesId {
+            seriesid: x,
+        }
+    }
+}
+
 
 /// Series ID from TheTVDB.com, along with language
 #[derive(Debug, Clone)]
