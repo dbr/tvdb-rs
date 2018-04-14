@@ -6,7 +6,7 @@ Change log format based on
 ["Keep a CHANGELOG"](http://keepachangelog.com/).
 
 ## [Unreleased]
-- `Tvdb::set_http_client` allows setting custom HTTP clients which implement `tvdb::RequestClient`
+- Significant rework to use new TVDB API version 2
 
 ## [0.4.0] - 2016-07-17
 - Better error handling - library should no longer panic in any reasonable case.
