@@ -69,9 +69,14 @@ impl DummyRequestClient{
     }
 }
 use tvdb::RequestClient;
-impl RequestClient for DummyRequestClient{
-    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String>{
-        return Err(TvdbError::CommunicationError{reason: "Fake error!".into()});
+impl RequestClient for DummyRequestClient {
+    fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String> {
+        return Err(TvdbError::CommunicationError {
+            reason: format!(
+                "Fake error while doing fake request for: {:?} with JWT {:?}",
+                url, jwt_token,
+            ),
+        });
     }
 }
 
