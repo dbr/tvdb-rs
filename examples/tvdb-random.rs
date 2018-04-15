@@ -39,7 +39,7 @@ fn main() {
 
         let ep = api.episode(tvdb::EpisodeId::new(rid, "en"));
         match ep {
-            Ok(ep) => println!("Okay  ID {}: {}", rid, ep.episode_name),
+            Ok(ep) => println!("Okay  ID {}: {}", rid, ep.data.unwrap().episode_name),
             Err(e) => println!("Error ID {}: {:?}", rid, e),
         }
     }

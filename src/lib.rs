@@ -14,9 +14,9 @@ extern crate serde_derive;
 extern crate serde_json;
 
 // Module structure
-mod error;
-mod data;
 pub mod api;
+mod data;
+mod error;
 
 // Main public API
 pub use api::{RequestClient, Tvdb};
@@ -25,4 +25,4 @@ pub use api::{RequestClient, Tvdb};
 pub use error::{TvdbError, TvdbResult};
 
 // Expose data types
-pub use data::{Date, EpisodeId};
+pub use data::EpisodeId;

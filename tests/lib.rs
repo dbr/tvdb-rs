@@ -36,7 +36,7 @@ fn lookup_by_u32() {
     api.login().unwrap();
     let ep = api.episode(184603);
     println!("Episode; {:?}", ep);
-    assert!(ep.unwrap().episode_name == "My Mentor");
+    assert!(ep.unwrap().data.unwrap().episode_name == "My Mentor");
 }
 
 #[test]
@@ -54,7 +54,7 @@ fn random_series() {
         let ep = api.episode(EpisodeId::new(rid, "en"));
         println!("{:?}", ep);
         match ep {
-            Ok(ep) => println!("{}", ep.episode_name),
+            Ok(ep) => println!("{}", ep.data.unwrap().episode_name),
             Err(e) => println!("{:?}", e),
         }
     }
