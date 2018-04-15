@@ -11,13 +11,7 @@
 
 ## Status
 
-- [x] Episode data lookup.
-- [ ] Lookup by different air orders (dvd, absolute)
-- [ ] Access extended actors data
-- [ ] Access banners data
-- [ ] Access full series record (`all.zip`)
-- [ ] User-specific methods (favorites, rating etc)
-
+0.5.0 will be first version to support v2 TVDB API. 0.4.0 is non-functional
 
 ## Release procedure
 1. Make changes
