@@ -27,7 +27,7 @@ fn lookup_by_epid() {
     api.login().unwrap();
     let ep = api.episode(EpisodeId::new(184603, "en"));
     println!("Episode: {:?}", ep);
-    assert!(ep.unwrap().episode_name == "My Mentor");
+    assert!(ep.unwrap().data.unwrap().episode_name == "My Mentor");
 }
 
 #[test]
