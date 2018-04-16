@@ -1,5 +1,5 @@
 extern crate tvdb;
-use tvdb::api::Tvdb;
+use tvdb::raw::Tvdb;
 
 static APIKEY: &'static str = "0629B785CE550C8D";
 

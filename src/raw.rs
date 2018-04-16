@@ -1,3 +1,5 @@
+/// Provides mostly direct binding to the HTTP API
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
