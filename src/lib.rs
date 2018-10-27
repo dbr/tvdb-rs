@@ -15,7 +15,7 @@ extern crate serde_json;
 
 // Module structure
 pub mod raw;
-mod data;
+pub mod data;
 mod error;
 
 // Main public API
