@@ -5,8 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 Change log format based on
 ["Keep a CHANGELOG"](http://keepachangelog.com/).
 
-## [Unreleased]
-- Significant rework to use new TVDB API version 2
+## [0.5.0] - 2018-09-28
+- Significant rework to use new TVDB API version 2. Still very much a work-in-progress
 
 ## [0.4.0] - 2016-07-17
 - Better error handling - library should no longer panic in any reasonable case.
