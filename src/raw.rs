@@ -173,9 +173,8 @@ impl<'a> Tvdb<'a> {
         let url = format!("https://api.thetvdb.com/episodes/{id}", id = id.seriesid);
         let data = c.get_url(&url, self.get_token())?;
         // Parse result
-        println!("{}", data);
-        let result: Result<EpisodeRecordResult, serde_json::Error> = serde_json::from_str(&data);
-        return Ok(result?);
+        let result: EpisodeRecordResult = serde_json::from_str(&data)?;
+        return Ok(result);
     }
 
     /// Full information about given episode
