@@ -44,10 +44,10 @@ fn random_series() {
     // Opening a bunch of ~random series to check for panicing
     use rand::{Rng, SeedableRng, StdRng};
 
-    let seed: &[_] = &[1, 2, 3, 4];
-    let mut rng: StdRng = SeedableRng::from_seed(seed);
+    let mut rng = StdRng::seed_from_u64(42);
+
     for _ in 1..10 {
-        let rid = rng.gen_range::<u32>(1, 20000);
+        let rid: u32 = rng.gen_range(1, 20000);
         println!("Getting series {}", rid);
 
         let api = Tvdb::new(APIKEY);

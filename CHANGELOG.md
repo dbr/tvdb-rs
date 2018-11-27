@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 Change log format based on
 ["Keep a CHANGELOG"](http://keepachangelog.com/).
 
+## [Unreleased]
+- Updated requirements including `reqwest` ([Issue #2](https://github.com/dbr/tvdb-rs/issues/2))
+
 ## [0.5.0] - 2018-09-28
 - Significant rework to use new TVDB API version 2. Still very much a work-in-progress
 

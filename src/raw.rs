@@ -7,7 +7,6 @@ use std::io::Read;
 use std::rc::Rc;
 
 use reqwest;
-use reqwest::header::{Authorization, Bearer, Headers};
 use serde_json;
 use url;
 
@@ -28,13 +27,15 @@ impl RequestClient for DefaultHttpClient {
     fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String> {
         // Make request
         let client = reqwest::Client::new();
+        let mut req = client.get(url);
 
-        let mut headers = Headers::new();
+        // Add auth header
         if let Some(tok) = jwt_token {
-            headers.set(Authorization(Bearer { token: tok.into() }));
+            req = req.bearer_auth(tok);
         }
 
-        let mut resp = client.get(url).headers(headers).send().map_err(|x| {
+        // Send request
+        let mut resp = req.send().map_err(|x| {
             TvdbError::CommunicationError {
                 reason: format!("Error creating HTTP request: {}", x),
             }
