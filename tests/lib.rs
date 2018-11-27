@@ -42,9 +42,7 @@ fn lookup_by_u32() {
 #[test]
 fn random_series() {
     // Opening a bunch of ~random series to check for panicing
-    use rand::{Rng, SeedableRng, StdRng};
-
-    let mut rng = StdRng::seed_from_u64(42);
+    let mut rng = rand::rngs::StdRng::seed_from_u64(42);
 
     for _ in 1..10 {
         let rid: u32 = rng.gen_range(1, 20000);
