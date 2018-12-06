@@ -3,6 +3,7 @@ extern crate env_logger;
 extern crate rand;
 extern crate tvdb;
 
+use rand::{Rng, SeedableRng};
 use argparse::{ArgumentParser, Store};
 
 fn main() {

@@ -1,6 +1,8 @@
 extern crate rand;
 extern crate tvdb;
 
+use rand::{Rng, SeedableRng};
+
 use tvdb::{EpisodeId, Tvdb, TvdbError, TvdbResult};
 
 const APIKEY: &'static str = "0629B785CE550C8D";
