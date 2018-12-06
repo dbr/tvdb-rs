@@ -1,6 +1,6 @@
 [package]
 name = "tvdb"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["dbr <dbr.onix@gmail.com>"]
 
 description = "API wrapper to http://thetvdb.com (open database for TV episode data)"
