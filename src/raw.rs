@@ -66,9 +66,9 @@ impl RequestClient for DefaultHttpClient {
 pub struct Tvdb<'a> {
     /// Your API key from TheTVDB.com
     pub key: String,
-    http_client: Option<&'a RequestClient>,
+    http_client: Option<&'a dyn RequestClient>,
     jwt_token: RefCell<Option<String>>,
-    default_client: Rc<RequestClient>,
+    default_client: Rc<dyn RequestClient>,
 }
 
 impl<'a> Tvdb<'a> {
@@ -129,8 +129,8 @@ impl<'a> Tvdb<'a> {
 
     /// Sets a custom client (implementation of `RequestClient`) used to
     /// perform HTTP requests
-    pub fn set_http_client(&mut self, client: &'a RequestClient) {
-        self.http_client = Some::<&'a RequestClient>(client);
+    pub fn set_http_client(&mut self, client: &'a dyn RequestClient) {
+        self.http_client = Some::<&'a dyn RequestClient>(client);
     }
 
     /// Search for series by name or IMDB ID

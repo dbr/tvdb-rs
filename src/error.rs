@@ -62,7 +62,7 @@ impl Error for TvdbError {
         "TvdbError"
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         None
     }
 }

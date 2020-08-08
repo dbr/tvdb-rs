@@ -93,10 +93,10 @@ fn custom_http_client() {
     match result {
         Ok(_) => panic!("Expected error"),
         Err(e) => {
-            (match e {
+            match e {
                 TvdbError::CommunicationError { reason: _ } => (),
                 _ => panic!("Unexpected"),
-            })
+            }
         }
     }
 }
