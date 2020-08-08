@@ -26,7 +26,7 @@ pub struct DefaultHttpClient;
 impl RequestClient for DefaultHttpClient {
     fn get_url(&self, url: &str, jwt_token: Option<String>) -> TvdbResult<String> {
         // Make request
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
         let mut req = client.get(url);
 
         // Add auth header
@@ -107,7 +107,7 @@ impl<'a> Tvdb<'a> {
         let mut map = HashMap::new();
         map.insert("apikey", &self.key);
 
-        let c = reqwest::Client::new();
+        let c = reqwest::blocking::Client::new();
         let mut resp = c.post("https://api.thetvdb.com/login")
             .json(&map)
             .send()
