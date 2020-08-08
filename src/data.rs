@@ -75,7 +75,7 @@ impl From<SeriesSearchData> for EpisodeId {
 #[serde(rename_all = "camelCase")]
 pub struct JSONErrors {
     pub invalid_filters: Option<Vec<String>>,
-    pub invalid_language: Option<Vec<String>>,
+    pub invalid_language: Option<String>,
     pub invalid_query_params: Option<Vec<String>>,
 }
 
