@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 Change log format based on
 ["Keep a CHANGELOG"](http://keepachangelog.com/).
 
+## [0.6.0] - 2020-08-08
+- Updated `request` to version 0.10 - ([PR #3](https://github.com/dbr/tvdb-rs/pull/3))
+- Invalid language error should be a string, not vec-of-strings - ([PR #2](https://github.com/dbr/tvdb-rs/pull/4))
+
 ## [0.5.1] - 2018-12-06
 - Updated internal requirements including `reqwest` ([Issue #2](https://github.com/dbr/tvdb-rs/issues/2))
 
